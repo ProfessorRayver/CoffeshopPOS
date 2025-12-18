@@ -105,11 +105,11 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
             overflow-y: auto;
-            padding: 40px;
+            padding: 20px;
         }
         
         .container-wrapper {
-            max-width: 2000px;
+            max-width: 1600px;
             margin: 0 auto;
         }
         
@@ -117,10 +117,10 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         .header-bar {
             background: var(--espresso);
             color: var(--gold);
-            padding: 40px 50px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            margin-bottom: 40px;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -128,32 +128,39 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         
         .header-bar h1 {
             margin: 0;
-            font-size: 3rem;
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 15px;
         }
         
         .user-info {
             text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .user-info .username {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+            font-size: 0.95rem;
         }
         
-        .btn-logout {
+        .btn-logout, .btn-analytics {
             background: var(--gold);
             color: var(--espresso);
             border: none;
-            padding: 12px 30px;
-            font-size: 1.1rem;
+            padding: 8px 20px;
+            font-size: 0.9rem;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
+        }
+        
+        .btn-analytics {
+            background: #4CAF50;
+            color: white;
         }
         
         .btn-logout:hover {
@@ -162,54 +169,60 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             color: var(--espresso);
         }
         
+        .btn-analytics:hover {
+            background: #45a049;
+            transform: scale(1.05);
+            color: white;
+        }
+        
         /* TWO COLUMN LAYOUT */
         .main-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         
         /* PANELS */
         .panel {
             background: white;
-            border: 4px solid var(--gold);
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            min-height: 600px;
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            min-height: 400px;
         }
         
         .panel-header {
-            font-size: 2.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 4px solid currentColor;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid currentColor;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             color: var(--espresso);
         }
         
         /* TABLES */
         .table-custom {
             width: 100%;
-            font-size: 1.2rem;
-            margin-bottom: 30px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
         }
         
         .table-custom th {
             background: var(--espresso);
             color: white;
-            padding: 20px;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
+            padding: 12px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
         }
         
         .table-custom td {
-            padding: 20px;
-            border-bottom: 2px solid #e0e0e0;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
         }
         
         .table-custom tbody tr:hover {
@@ -220,29 +233,29 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         .total-display {
             background: var(--espresso);
             color: var(--gold);
-            padding: 30px;
+            padding: 18px;
             text-align: center;
-            font-size: 2.5rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            border-radius: 15px;
-            border: 4px solid var(--gold);
-            margin-top: 30px;
+            border-radius: 10px;
+            border: 3px solid var(--gold);
+            margin-top: 15px;
         }
         
         /* ADMIN TABS */
         .nav-tabs {
             border: none;
-            margin-bottom: 30px;
-            gap: 10px;
+            margin-bottom: 20px;
+            gap: 8px;
         }
         
         .nav-tabs .nav-link {
             background: transparent;
-            border: 3px solid #ddd;
+            border: 2px solid #ddd;
             color: var(--espresso);
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 12px 12px 0 0;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            border-radius: 8px 8px 0 0;
             font-weight: bold;
         }
         
@@ -253,34 +266,34 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         }
         
         .tab-content {
-            padding: 30px 0;
+            padding: 20px 0;
         }
         
         .form-control-sm {
-            padding: 15px;
-            font-size: 1.1rem;
+            padding: 10px;
+            font-size: 0.9rem;
             border: 2px solid #ddd;
-            border-radius: 8px;
+            border-radius: 6px;
         }
         
         .btn-sm {
-            padding: 15px;
-            font-size: 1.1rem;
-            margin-top: 15px;
+            padding: 10px;
+            font-size: 0.9rem;
+            margin-top: 10px;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 6px;
         }
         
         .btn-reset {
             width: 100%;
-            margin-top: 30px;
-            padding: 18px;
+            margin-top: 20px;
+            padding: 12px;
             background: var(--espresso);
             color: white;
-            border: 3px solid var(--gold);
+            border: 2px solid var(--gold);
             font-weight: bold;
-            font-size: 1.2rem;
-            border-radius: 12px;
+            font-size: 0.95rem;
+            border-radius: 8px;
         }
         
         .btn-reset:hover {
@@ -289,41 +302,41 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         }
         
         .alert {
-            margin-bottom: 30px;
-            padding: 20px;
-            font-size: 1.1rem;
-            border-radius: 12px;
+            margin-bottom: 15px;
+            padding: 12px;
+            font-size: 0.9rem;
+            border-radius: 8px;
         }
         
         /* ABOUT US SECTION */
         .about-section {
             background: var(--espresso);
             color: var(--gold);
-            border: 4px solid var(--gold);
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             text-align: center;
         }
         
         .about-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 30px;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
         }
         
         .about-section p {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-            line-height: 1.8;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            line-height: 1.6;
         }
         
         .developers {
-            margin-top: 30px;
-            font-size: 1.5rem;
+            margin-top: 15px;
+            font-size: 1.1rem;
             font-weight: bold;
         }
         
@@ -343,7 +356,10 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             <div class="username">
                 <i class="fas fa-user-cog"></i> <?php echo strtoupper($_SESSION['username']); ?>
             </div>
-            <a href="?logout=1" class="btn btn-logout">
+            <a href="analytics.php" class="btn-analytics">
+                <i class="fas fa-chart-line"></i> ANALYTICS
+            </a>
+            <a href="?logout=1" class="btn-logout">
                 <i class="fas fa-sign-out-alt"></i> LOGOUT
             </a>
         </div>

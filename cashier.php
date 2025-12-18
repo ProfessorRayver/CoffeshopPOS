@@ -76,11 +76,11 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
             overflow-y: auto;
-            padding: 40px;
+            padding: 20px;
         }
         
         .container-wrapper {
-            max-width: 2000px;
+            max-width: 1600px;
             margin: 0 auto;
         }
         
@@ -88,10 +88,10 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         .header-bar {
             background: var(--espresso);
             color: var(--gold);
-            padding: 40px 50px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            margin-bottom: 40px;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -99,10 +99,10 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         
         .header-bar h1 {
             margin: 0;
-            font-size: 3rem;
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 15px;
         }
         
         .user-info {
@@ -110,18 +110,18 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         }
         
         .user-info .username {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
         }
         
         .btn-logout {
             background: var(--gold);
             color: var(--espresso);
             border: none;
-            padding: 12px 30px;
-            font-size: 1.1rem;
+            padding: 8px 20px;
+            font-size: 0.9rem;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: all 0.3s;
         }
         
@@ -134,18 +134,18 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         .main-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         
         /* LARGE PANELS */
         .panel {
             background: white;
-            border: 4px solid var(--gold);
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            min-height: 600px;
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            min-height: 400px;
         }
         
         .panel-dark {
@@ -154,33 +154,33 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         }
         
         .panel-header {
-            font-size: 2.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 4px solid currentColor;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid currentColor;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
         
         /* POS FORM */
         .pos-form label {
             display: block;
-            margin-bottom: 15px;
-            margin-top: 30px;
+            margin-bottom: 8px;
+            margin-top: 15px;
             font-weight: bold;
-            font-size: 1.3rem;
-            letter-spacing: 2px;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
         }
         
         .pos-form .form-control {
             background: rgba(255,255,255,0.1);
-            border: 3px solid var(--gold);
+            border: 2px solid var(--gold);
             color: white;
-            padding: 25px;
-            font-size: 1.5rem;
-            border-radius: 12px;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
         }
         
         .pos-form .form-control::placeholder {
@@ -192,11 +192,11 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
             color: var(--espresso);
             font-weight: bold;
             width: 100%;
-            font-size: 2rem;
+            font-size: 1.2rem;
             border: none;
-            padding: 30px;
-            margin-top: 40px;
-            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
             transition: all 0.3s;
         }
         
@@ -208,45 +208,45 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         /* SEARCH BAR */
         .search-box {
             position: relative;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
         
         .search-box input {
             width: 100%;
-            padding: 20px 60px 20px 25px;
-            border: 3px solid var(--gold);
-            border-radius: 12px;
-            font-size: 1.3rem;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            font-size: 0.95rem;
             background: white;
         }
         
         .search-box i {
             position: absolute;
-            right: 25px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--gold);
-            font-size: 1.5rem;
+            font-size: 1.1rem;
         }
         
         /* TABLES */
         .table-custom {
             width: 100%;
-            font-size: 1.2rem;
-            margin-bottom: 30px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
         }
         
         .table-custom th {
             background: var(--espresso);
             color: white;
-            padding: 20px;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
+            padding: 12px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
         }
         
         .table-custom td {
-            padding: 20px;
-            border-bottom: 2px solid #e0e0e0;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
         }
         
         .table-custom tbody tr:hover {
@@ -254,99 +254,99 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         }
         
         .alert {
-            margin-bottom: 30px;
-            padding: 20px;
-            font-size: 1.1rem;
-            border-radius: 12px;
+            margin-bottom: 15px;
+            padding: 12px;
+            font-size: 0.9rem;
+            border-radius: 8px;
         }
         
         .no-results {
             text-align: center;
-            padding: 60px;
+            padding: 40px;
             color: #999;
-            font-size: 1.3rem;
+            font-size: 1rem;
         }
         
         /* COFFEE FACTS SECTION */
         .coffee-facts-section {
             background: white;
-            border: 4px solid var(--gold);
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         
         .coffee-facts-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 40px;
+            gap: 20px;
             align-items: center;
         }
         
         .facts-text h2 {
             color: var(--espresso);
-            font-size: 2rem;
-            margin-bottom: 20px;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
         
         .facts-text p {
             color: var(--espresso);
-            font-size: 1.4rem;
-            line-height: 1.8;
+            font-size: 1rem;
+            line-height: 1.6;
             margin: 0;
         }
         
         .image-placeholder {
             background: linear-gradient(135deg, var(--cream) 0%, var(--ivory) 100%);
-            border: 3px dashed var(--gold);
-            border-radius: 15px;
-            height: 200px;
+            border: 2px dashed var(--gold);
+            border-radius: 10px;
+            height: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: var(--gold);
-            font-size: 1.2rem;
+            font-size: 0.9rem;
         }
         
         .image-placeholder i {
-            font-size: 4rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem;
+            margin-bottom: 8px;
         }
         
         /* ABOUT US SECTION */
         .about-section {
             background: var(--espresso);
             color: var(--gold);
-            border: 4px solid var(--gold);
-            border-radius: 20px;
-            padding: 50px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             text-align: center;
         }
         
         .about-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 30px;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
         }
         
         .about-section p {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-            line-height: 1.8;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            line-height: 1.6;
         }
         
         .developers {
-            margin-top: 30px;
-            font-size: 1.5rem;
+            margin-top: 15px;
+            font-size: 1.1rem;
             font-weight: bold;
         }
         
