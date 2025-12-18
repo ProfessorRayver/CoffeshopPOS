@@ -124,7 +124,7 @@ while($row = mysqli_fetch_assoc($products_result)) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Analytics - Coffee Shop System</title>
+    <title>Analytics - CRS Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>

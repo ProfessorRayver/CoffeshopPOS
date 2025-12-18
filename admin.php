@@ -82,9 +82,9 @@ if (isset($_POST['reset_day'])) {
 // --- SEND RECEIPT EMAIL ---
 if (isset($_POST['send_email'])) {
     $to = $_POST['email_to'];
-    $subject = "Your Coffee Shop Receipt";
+    $subject = "Your CRS Cafe Receipt";
     $body = "Thank you for your purchase!\n\n" . $_POST['receipt_text'];
-    $headers = "From: no-reply@coffeeshop.com";
+    $headers = "From: no-reply@crscafe.com";
     
     // Note: mail() requires a configured mail server (e.g., Mercury/Sendmail in XAMPP)
     $sent = @mail($to, $subject, $body, $headers); 
@@ -92,15 +92,38 @@ if (isset($_POST['send_email'])) {
     $msgType = "success";
 }
 
+// --- EXPORT TO CSV ---
+if (isset($_POST['export_csv'])) {
+    $filename = "Sales_Report_" . date('Y-m-d') . ".csv";
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    
+    $output = fopen('php://output', 'w');
+    fputcsv($output, array('Time', 'Customer', 'Item', 'Price', 'Tendered', 'Change'));
+    
+    $query = "SELECT sale_time, customer_name, drink_name, price, amount_tendered, change_amount FROM daily_sales ORDER BY sale_time DESC";
+    $result = mysqli_query($conn, $query);
+    while($row = mysqli_fetch_assoc($result)) {
+        fputcsv($output, $row);
+    }
+    fclose($output);
+    exit();
+}
+
 // --- FETCH DATA ---
 $sales_data = mysqli_query($conn, "SELECT * FROM daily_sales ORDER BY sale_time DESC");
 $total_q = mysqli_query($conn, "SELECT SUM(price) as total FROM daily_sales");
 $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
+
+// --- CALCULATE GOAL PROGRESS ---
+$daily_target = 5000.00; // Set your daily goal here
+$progress_pct = ($grand_total > 0) ? ($grand_total / $daily_target) * 100 : 0;
+$progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin - Coffee Shop System</title>
+    <title>Admin - CRS Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -201,10 +224,10 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             color: white;
         }
         
-        /* TWO COLUMN LAYOUT */
+        /* VERTICAL LAYOUT - STACKED PANELS */
         .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -216,7 +239,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            min-height: 400px;
+            width: 100%;
         }
         
         .panel-header {
@@ -422,49 +445,9 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         </div>
     </div>
     
-    <!-- MAIN TWO COLUMN LAYOUT -->
+    <!-- MAIN VERTICAL LAYOUT -->
     <div class="main-layout">
-        <!-- LEFT: TODAY'S SALES -->
-        <div class="panel">
-            <div class="panel-header">
-                <i class="fas fa-receipt"></i> TODAY'S SALES
-            </div>
-            
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>TIME</th>
-                        <th>CUSTOMER</th>
-                        <th>ITEM</th>
-                        <th>PRICE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    if (mysqli_num_rows($sales_data) > 0) {
-                        while($row = mysqli_fetch_assoc($sales_data)): 
-                    ?>
-                    <tr>
-                        <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
-                        <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
-                        <td><?php echo $row['drink_name']; ?></td>
-                        <td>₱<?php echo number_format($row['price'], 2); ?></td>
-                    </tr>
-                    <?php 
-                        endwhile;
-                    } else {
-                        echo '<tr><td colspan="4" style="text-align: center; color: #999; padding: 60px;">No sales recorded yet</td></tr>';
-                    }
-                    ?>
-                </tbody>
-            </table>
-            
-            <div class="total-display">
-                TOTAL: ₱<?php echo number_format($grand_total, 2); ?>
-            </div>
-        </div>
-        
-        <!-- RIGHT: ADMIN PANEL -->
+        <!-- TOP: PRODUCT MANAGEMENT -->
         <div class="panel">
             <div class="panel-header">
                 <i class="fas fa-tools"></i> PRODUCT MANAGEMENT
@@ -547,16 +530,75 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                 </button>
             </form>
         </div>
+        
+        <!-- BOTTOM: TODAY'S SALES -->
+        <div class="panel">
+            <div class="panel-header">
+                <i class="fas fa-receipt"></i> TODAY'S SALES
+                <form method="POST" style="margin-left: auto;">
+                    <button type="submit" name="export_csv" class="btn btn-success btn-sm" style="margin-top: 0;">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </form>
+            </div>
+            
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>TIME</th>
+                        <th>CUSTOMER</th>
+                        <th>ITEM</th>
+                        <th>PRICE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    if (mysqli_num_rows($sales_data) > 0) {
+                        while($row = mysqli_fetch_assoc($sales_data)): 
+                    ?>
+                    <tr>
+                        <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
+                        <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
+                        <td><?php echo $row['drink_name']; ?></td>
+                        <td>₱<?php echo number_format($row['price'], 2); ?></td>
+                    </tr>
+                    <?php 
+                        endwhile;
+                    } else {
+                        echo '<tr><td colspan="4" style="text-align: center; color: #999; padding: 60px;">No sales recorded yet</td></tr>';
+                    }
+                    ?>
+                </tbody>
+            </table>
+            
+            <div class="total-display">
+                TOTAL: ₱<?php echo number_format($grand_total, 2); ?>
+                
+                <!-- PROGRESS BAR -->
+                <div style="margin-top: 15px; font-size: 0.9rem; text-align: left;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="color: var(--gold);">Daily Goal: <?php echo number_format($progress_pct, 0); ?>%</span>
+                        <span style="color: var(--gold);">Target: ₱<?php echo number_format($daily_target); ?></span>
+                    </div>
+                    <div class="progress" style="height: 10px; background-color: rgba(201,169,97,0.3);">
+                        <div class="progress-bar bg-<?php echo $progress_color; ?>" role="progressbar" 
+                             style="width: <?php echo min($progress_pct, 100); ?>%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- ABOUT US SECTION -->
     <div class="about-section">
         <h2><i class="fas fa-users"></i> ABOUT US</h2>
-        <p>This Coffee Shop Master System was crafted with passion and dedication</p>
+        <p>This CRS Cafe Master System was crafted with passion and dedication</p>
         <p>to streamline coffee shop operations and enhance customer experience.</p>
         <div class="developers">
             <i class="fas fa-code"></i> DEVELOPED BY:<br>
-            Char Mae Grace Bering & Rayver S. Reyes
+              Rayver S. Reyes - full stack developer / project lead
+            <br> Char Mae Grace Bering - backend developer & database handler 
+            <br>Sebastian Rafael Belando - backend developer
         </div>
     </div>
 </div>
@@ -573,7 +615,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                 <!-- Receipt Preview Area -->
                 <div id="receipt-preview">
                     <div class="receipt-header">
-                        <h4>COFFEE SHOP MASTER</h4>
+                        <h4>CRS CAFE MASTER</h4>
                         <p>123 Brew Street, Java City</p>
                         <p>Tel: (555) 123-4567</p>
                     </div>

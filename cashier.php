@@ -73,11 +73,15 @@ if (isset($_POST['process_order'])) {
 
 // --- FETCH MENU DATA ---
 $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC");
+
+// --- IDENTIFY BEST SELLER ---
+$best_q = mysqli_query($conn, "SELECT product_id FROM daily_sales GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 1");
+$best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['product_id'] : null;
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cashier - Coffee Shop System</title>
+    <title>Cashier - CRS Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
@@ -382,6 +386,7 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
     <div class="header-bar">
         <h1><i class="fas fa-cash-register"></i> CASHIER DASHBOARD</h1>
         <div class="user-info">
+            <div id="liveClock" style="font-weight: bold; color: var(--gold); margin-bottom: 5px; font-size: 1.1rem;"></div>
             <div class="username">
                 <i class="fas fa-user"></i> <?php echo strtoupper($_SESSION['username']); ?>
             </div>
@@ -443,7 +448,12 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
                     <?php while($m = mysqli_fetch_assoc($menu_data)): ?>
                     <tr>
                         <td><strong><?php echo $m['product_id']; ?></strong></td>
-                        <td><?php echo $m['drink_name']; ?></td>
+                        <td>
+                            <?php echo $m['drink_name']; ?>
+                            <?php if ($best_seller_id && $m['product_id'] == $best_seller_id): ?>
+                                <span class="badge bg-warning text-dark ms-2"><i class="fas fa-crown"></i> BEST SELLER</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo $m['type']; ?></td>
                         <td>₱<?php echo number_format($m['price'], 2); ?></td>
                     </tr>
@@ -476,11 +486,13 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
     <!-- ABOUT US SECTION -->
     <div class="about-section">
         <h2><i class="fas fa-users"></i> ABOUT US</h2>
-        <p>This Coffee Shop Master System was crafted with passion and dedication</p>
+        <p>This CRS Cafe Master System was crafted with passion and dedication</p>
         <p>to streamline coffee shop operations and enhance customer experience.</p>
         <div class="developers">
             <i class="fas fa-code"></i> DEVELOPED BY:<br>
-            Char Mae Grace Bering & Rayver S. Reyes & Sebastian Rafael Belando
+                  Rayver S. Reyes - full stack developer / project lead
+            <br> Char Mae Grace Bering - backend developer & database handler 
+            <br>Sebastian Rafael Belando - backend developer
         </div>
     </div>
 </div>
@@ -516,6 +528,53 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
                     <div class="col-6 text-start text-muted">Cash Given:</div>
                     <div class="col-6 text-end">₱<?php echo number_format($receipt_data['tendered'], 2); ?></div>
                 </div>
+                
+                <div class="mt-4 d-flex justify-content-center">
+                    <?php 
+                    // 1. Detect the current server URL
+                    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+                    $host = $_SERVER['HTTP_HOST'];
+                    
+                    // FIX: If running on localhost, try to find the computer's Wi-Fi IP address
+                    // This allows the phone to connect to the computer
+                    if ($host === 'localhost' || $host === '127.0.0.1') {
+                        $ip = gethostbyname(gethostname());
+                        if ($ip !== '127.0.0.1' && $ip !== 'localhost') {
+                            $host = $ip;
+                        } else {
+                            // Fallback: Try to find a 192.168.x.x IP from ipconfig (Windows)
+                            $out = [];
+                            @exec('ipconfig', $out);
+                            foreach($out as $line) {
+                                if(preg_match('/IPv4 Address.*: (192\.168\.\d+\.\d+)/', $line, $matches)) {
+                                    $host = $matches[1];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $path = dirname($_SERVER['PHP_SELF']);
+                    // Clean up path slashes for URL
+                    $path = rtrim(str_replace('\\', '/', $path), '/') . '/';
+                    
+                    // 2. Build the URL to receipt_view.php with parameters
+                    $base_url = $protocol . "://" . $host . $path . "receipt_view.php";
+                    $params = [
+                        'date' => $receipt_data['date'],
+                        'customer' => $receipt_data['customer'],
+                        'item' => $receipt_data['item'],
+                        'price' => $receipt_data['price'],
+                        'tendered' => $receipt_data['tendered'],
+                        'change' => $receipt_data['change']
+                    ];
+                    $full_url = $base_url . "?" . http_build_query($params);
+                    
+                    // 3. Generate QR Code pointing to that URL
+                    $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($full_url);
+                    ?>
+                    <img src="<?php echo $qr_url; ?>" alt="Receipt QR Code" style="border: 2px solid #eee; padding: 5px;">
+                </div>
                 <?php endif; ?>
             </div>
             <div class="modal-footer justify-content-center">
@@ -545,6 +604,16 @@ function rotateFact() {
     document.getElementById('coffeeFact').textContent = coffeeFacts[factIndex];
 }
 setInterval(rotateFact, 8000);
+
+// LIVE CLOCK
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dateString = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    document.getElementById('liveClock').innerHTML = `<i class="far fa-clock"></i> ${dateString} - ${timeString}`;
+}
+setInterval(updateClock, 1000);
+updateClock(); // Run immediately
 
 // SEARCH FUNCTIONALITY
 document.getElementById('menuSearch').addEventListener('keyup', function() {
@@ -579,8 +648,9 @@ document.getElementById('menuSearch').addEventListener('keyup', function() {
 
 // SHOW RECEIPT MODAL IF DATA EXISTS
 <?php if ($receipt_data): ?>
-const transactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
-transactionModal.show();
+    const modalElement = document.getElementById('transactionModal');
+    const transactionModal = new bootstrap.Modal(modalElement);
+    transactionModal.show();
 <?php endif; ?>
 </script>
 </body>

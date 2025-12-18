@@ -8,6 +8,8 @@ $DBPass = "";
 $DBName = "cafe_db";
 $conn = mysqli_connect($DBHost, $DBUser, $DBPass, $DBName);
 if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
+// --- DATABASE CONNECTION ---
+require_once 'db_connect.php';
 
 $error = "";
 
@@ -50,7 +52,7 @@ if (isset($_POST['login'])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - Coffee Shop System</title>
+    <title>Login - CRS Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <style>
@@ -202,7 +204,7 @@ if (isset($_POST['login'])) {
     <div class="login-container">
         <div class="login-header">
             <i class="fas fa-coffee"></i>
-            <h1>COFFEE SHOP</h1>
+            <h1>CRS CAFE</h1>
             <p>MASTER SYSTEM</p>
         </div>
         
