@@ -176,6 +176,26 @@ if (isset($_POST['login'])) {
             border-radius: 4px;
             font-family: 'Courier New', monospace;
         }
+        
+        .password-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .password-container .form-control {
+            margin-bottom: 0;
+            padding-right: 50px;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--espresso);
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -197,7 +217,10 @@ if (isset($_POST['login'])) {
             <input type="text" name="username" class="form-control" required autofocus>
             
             <label class="form-label">PASSWORD</label>
-            <input type="password" name="password" class="form-control" required>
+            <div class="password-container">
+                <input type="password" name="password" id="password" class="form-control" required>
+                <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+            </div>
             
             <button type="submit" name="login" class="btn btn-login">
                 <i class="fas fa-sign-in-alt"></i> LOGIN
@@ -206,9 +229,26 @@ if (isset($_POST['login'])) {
         
         <div class="demo-info">
             <strong><i class="fas fa-info-circle"></i> DEMO ACCOUNTS:</strong><br><br>
-            <strong>Admin:</strong> <code>admin / admin123</code><br>
-            <strong>Cashier:</strong> <code>cashier / cashier123</code>
+            <strong>Admin:</strong> <code>admin/admin123</code><br>
+            <strong>Cashier:</strong> <code>cashier/cashier123</code>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.querySelector('.toggle-password');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

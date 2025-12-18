@@ -26,42 +26,41 @@ if (isset($_GET['logout'])) {
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d', strtotime('-30 days'));
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 
-// --- WEEKLY ANALYSIS ---
-// Get sales by day of week
-$weekly_query = "
+// --- DAILY SALES PATTERN ---
+// Get sales by date
+$daily_query = "
     SELECT 
-        DAYNAME(sale_time) as day_name,
-        DAYOFWEEK(sale_time) as day_num,
+        DATE_FORMAT(sale_time, '%b %d') as date_label,
         COUNT(*) as transaction_count,
-        SUM(price) as total_sales
+        COALESCE(SUM(price), 0) as total_sales
     FROM daily_sales
     WHERE DATE(sale_time) BETWEEN ? AND ?
-    GROUP BY day_name, day_num
-    ORDER BY day_num
+    GROUP BY DATE(sale_time)
+    ORDER BY DATE(sale_time) ASC
 ";
-$stmt = mysqli_prepare($conn, $weekly_query);
+$stmt = mysqli_prepare($conn, $daily_query);
 mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
 mysqli_stmt_execute($stmt);
-$weekly_result = mysqli_stmt_get_result($stmt);
+$daily_result = mysqli_stmt_get_result($stmt);
 
-$weekly_data = [];
+$daily_data = [];
 $peak_day = ['name' => 'N/A', 'sales' => 0];
-while($row = mysqli_fetch_assoc($weekly_result)) {
-    $weekly_data[] = $row;
+while($row = mysqli_fetch_assoc($daily_result)) {
+    $daily_data[] = $row;
     if ($row['total_sales'] > $peak_day['sales']) {
-        $peak_day = ['name' => $row['day_name'], 'sales' => $row['total_sales']];
+        $peak_day = ['name' => $row['date_label'], 'sales' => $row['total_sales']];
     }
 }
 
 // --- WEEKLY COMPARISON (Last 4 Weeks) ---
 $weekly_comparison = [];
 for ($i = 3; $i >= 0; $i--) {
-    $week_start = date('Y-m-d', strtotime("-$i weeks Sunday"));
-    $week_end = date('Y-m-d', strtotime("-$i weeks Saturday"));
+    $week_start = date('Y-m-d', strtotime("-$i weeks -" . date('w') . " days"));
+    $week_end = date('Y-m-d', strtotime("-$i weeks +" . (6 - date('w')) . " days"));
     
     $week_query = "
         SELECT 
-            SUM(price) as total,
+            COALESCE(SUM(price), 0) as total,
             COUNT(*) as transactions
         FROM daily_sales
         WHERE DATE(sale_time) BETWEEN ? AND ?
@@ -87,11 +86,11 @@ $monthly_query = "
         DATE(sale_time) as sale_date,
         DAYNAME(sale_time) as day_name,
         COUNT(*) as transaction_count,
-        SUM(price) as total_sales
+        COALESCE(SUM(price), 0) as total_sales
     FROM daily_sales
     WHERE MONTH(sale_time) = MONTH(CURRENT_DATE)
         AND YEAR(sale_time) = YEAR(CURRENT_DATE)
-    GROUP BY sale_date, day_name
+    GROUP BY DATE(sale_time), DAYNAME(sale_time)
     ORDER BY total_sales DESC
     LIMIT 10
 ";
@@ -106,7 +105,7 @@ $products_query = "
     SELECT 
         drink_name,
         COUNT(*) as sold_count,
-        SUM(price) as revenue
+        COALESCE(SUM(price), 0) as revenue
     FROM daily_sales
     WHERE DATE(sale_time) BETWEEN ? AND ?
     GROUP BY drink_name
@@ -370,12 +369,12 @@ while($row = mysqli_fetch_assoc($products_result)) {
         <div class="stat-card highlight">
             <i class="fas fa-star"></i>
             <div class="value"><?php echo $peak_day['name']; ?></div>
-            <div class="label">PEAK DAY OF WEEK</div>
+            <div class="label">PEAK SALES DATE</div>
         </div>
         
         <div class="stat-card">
             <i class="fas fa-dollar-sign"></i>
-            <div class="value">$<?php echo number_format($peak_day['sales'], 2); ?></div>
+            <div class="value">₱<?php echo number_format($peak_day['sales'], 2); ?></div>
             <div class="label">PEAK DAY SALES</div>
         </div>
         
@@ -396,10 +395,10 @@ while($row = mysqli_fetch_assoc($products_result)) {
     <div class="charts-grid">
         <div class="panel">
             <div class="panel-header">
-                <i class="fas fa-calendar-week"></i> WEEKLY SALES PATTERN
+                <i class="fas fa-calendar-day"></i> DAILY SALES PATTERN
             </div>
             <div class="chart-container">
-                <canvas id="weeklyChart"></canvas>
+                <canvas id="dailyChart"></canvas>
             </div>
         </div>
         
@@ -442,8 +441,8 @@ while($row = mysqli_fetch_assoc($products_result)) {
                     <td><strong><?php echo $week['week']; ?></strong></td>
                     <td><?php echo date('M d', strtotime($week['start'])) . ' - ' . date('M d', strtotime($week['end'])); ?></td>
                     <td><?php echo $week['transactions']; ?></td>
-                    <td><strong>$<?php echo number_format($week['total'], 2); ?></strong></td>
-                    <td>$<?php echo number_format($avg_per_day, 2); ?></td>
+                    <td><strong>₱<?php echo number_format($week['total'], 2); ?></strong></td>
+                    <td>₱<?php echo number_format($avg_per_day, 2); ?></td>
                     <td class="<?php echo $growth_class; ?>">
                         <?php if ($prev_total > 0): ?>
                             <i class="fas <?php echo $growth_icon; ?>"></i>
@@ -490,7 +489,7 @@ while($row = mysqli_fetch_assoc($products_result)) {
                     <td><?php echo date('M d, Y', strtotime($day['sale_date'])); ?></td>
                     <td><strong><?php echo $day['day_name']; ?></strong></td>
                     <td><?php echo $day['transaction_count']; ?></td>
-                    <td><strong>$<?php echo number_format($day['total_sales'], 2); ?></strong></td>
+                    <td><strong>₱<?php echo number_format($day['total_sales'], 2); ?></strong></td>
                 </tr>
                 <?php 
                     $rank++;
@@ -505,21 +504,21 @@ while($row = mysqli_fetch_assoc($products_result)) {
 </div>
 
 <script>
-// Weekly Pattern Chart
-const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
-const weeklyChart = new Chart(weeklyCtx, {
+// Daily Pattern Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
     type: 'bar',
     data: {
-        labels: <?php echo json_encode(array_column($weekly_data, 'day_name')); ?>,
+        labels: <?php echo json_encode(array_column($daily_data, 'date_label')); ?>,
         datasets: [{
-            label: 'Sales ($)',
-            data: <?php echo json_encode(array_column($weekly_data, 'total_sales')); ?>,
+            label: 'Sales (₱)',
+            data: <?php echo json_encode(array_column($daily_data, 'total_sales')); ?>,
             backgroundColor: 'rgba(201, 169, 97, 0.8)',
             borderColor: '#1A0F0A',
             borderWidth: 2
         }, {
             label: 'Transactions',
-            data: <?php echo json_encode(array_column($weekly_data, 'transaction_count')); ?>,
+            data: <?php echo json_encode(array_column($daily_data, 'transaction_count')); ?>,
             backgroundColor: 'rgba(26, 15, 10, 0.8)',
             borderColor: '#C9A961',
             borderWidth: 2

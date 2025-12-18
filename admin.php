@@ -160,7 +160,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             font-size: 0.95rem;
         }
         
-        .btn-logout, .btn-analytics {
+        .btn-logout, .btn-analytics, .btn-cashier {
             background: var(--gold);
             color: var(--espresso);
             border: none;
@@ -178,6 +178,11 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             color: white;
         }
         
+        .btn-cashier {
+            background: #007bff;
+            color: white;
+        }
+        
         .btn-logout:hover {
             background: #d4b56d;
             transform: scale(1.05);
@@ -186,6 +191,12 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         
         .btn-analytics:hover {
             background: #45a049;
+            transform: scale(1.05);
+            color: white;
+        }
+        
+        .btn-cashier:hover {
+            background: #0069d9;
             transform: scale(1.05);
             color: white;
         }
@@ -375,6 +386,19 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         .receipt-divider { border-top: 1px dashed #000; margin: 10px 0; }
         .receipt-footer { text-align: center; margin-top: 20px; font-size: 0.8rem; }
         #qrcode { display: flex; justify-content: center; margin-top: 15px; }
+        
+        /* TABLE ACTIONS */
+        .btn-receipt {
+            background: #4CAF50 !important;
+            color: white !important;
+            border: none !important;
+            transition: all 0.2s;
+        }
+        
+        .btn-receipt:hover {
+            background: #45a049 !important;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -388,6 +412,9 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             </div>
             <a href="analytics.php" class="btn-analytics">
                 <i class="fas fa-chart-line"></i> ANALYTICS
+            </a>
+            <a href="cashier.php" class="btn-cashier">
+                <i class="fas fa-cash-register"></i> CASHIER
             </a>
             <a href="?logout=1" class="btn-logout">
                 <i class="fas fa-sign-out-alt"></i> LOGOUT
@@ -410,7 +437,6 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                         <th>CUSTOMER</th>
                         <th>ITEM</th>
                         <th>PRICE</th>
-                        <th>ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -422,16 +448,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                         <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
                         <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
                         <td><?php echo $row['drink_name']; ?></td>
-                        <td>$<?php echo number_format($row['price'], 2); ?></td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-dark btn-receipt" 
-                                data-customer="<?php echo htmlspecialchars($row['customer_name']); ?>"
-                                data-item="<?php echo htmlspecialchars($row['drink_name']); ?>"
-                                data-price="<?php echo number_format($row['price'], 2); ?>"
-                                data-time="<?php echo date('Y-m-d H:i', strtotime($row['sale_time'])); ?>">
-                                <i class="fas fa-print"></i>
-                            </button>
-                        </td>
+                        <td>₱<?php echo number_format($row['price'], 2); ?></td>
                     </tr>
                     <?php 
                         endwhile;
@@ -443,7 +460,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
             </table>
             
             <div class="total-display">
-                TOTAL: $<?php echo number_format($grand_total, 2); ?>
+                TOTAL: ₱<?php echo number_format($grand_total, 2); ?>
             </div>
         </div>
         
@@ -546,10 +563,10 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
 
 <!-- RECEIPT MODAL -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-receipt"></i> Receipt Options</h5>
+                <h5 class="modal-title"><i class="fas fa-receipt"></i> Transaction Receipt</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -573,7 +590,18 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                         </div>
                     </div>
                     <div class="receipt-divider"></div>
-                    <div class="receipt-row" style="font-weight:bold;">
+                    <div class="receipt-details">
+                        <div class="receipt-row">
+                            <span>Amount Tendered:</span>
+                            <span id="r-tendered"></span>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Change:</span>
+                            <span id="r-change"></span>
+                        </div>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-row" style="font-weight:bold; font-size: 1.2rem;">
                         <span>TOTAL</span>
                         <span id="r-total"></span>
                     </div>
@@ -585,7 +613,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                 
                 <!-- Email Form -->
                 <form method="POST" class="mt-3 border-top pt-3">
-                    <label class="form-label">Email Receipt:</label>
+                    <label class="form-label"><i class="fas fa-envelope"></i> Email Receipt:</label>
                     <div class="input-group">
                         <input type="email" name="email_to" class="form-control" placeholder="customer@email.com" required>
                         <input type="hidden" name="receipt_text" id="hidden_receipt_text">
@@ -602,6 +630,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
                 <button type="button" class="btn btn-success" onclick="downloadPDF()">
                     <i class="fas fa-file-pdf"></i> Download PDF
                 </button>
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -610,34 +639,49 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script>
     // Handle Receipt Modal
-    const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-    
-    document.querySelectorAll('.btn-receipt').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const customer = this.dataset.customer;
-            const item = this.dataset.item;
-            const price = this.dataset.price;
-            const time = this.dataset.time;
-            
-            document.getElementById('r-date').textContent = time;
-            document.getElementById('r-customer').textContent = customer;
-            document.getElementById('r-item').textContent = item;
-            document.getElementById('r-price').textContent = '$' + price;
-            document.getElementById('r-total').textContent = '$' + price;
-            
-            // Prepare text for email
-            const receiptText = `Date: ${time}\nCustomer: ${customer}\nItem: ${item}\nPrice: $${price}\nTotal: $${price}`;
-            document.getElementById('hidden_receipt_text').value = receiptText;
-            
-            // Generate QR Code
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById('qrcode'), {
-                text: receiptText,
-                width: 80,
-                height: 80
+    document.addEventListener('DOMContentLoaded', function() {
+        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        
+        // Add click event to all receipt buttons
+        document.querySelectorAll('.btn-receipt').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('View button clicked'); // Debug log
+                
+                const customer = this.getAttribute('data-customer');
+                const item = this.getAttribute('data-item');
+                const price = this.getAttribute('data-price');
+                const time = this.getAttribute('data-time');
+                const tendered = this.getAttribute('data-tendered');
+                const change = this.getAttribute('data-change');
+                
+                console.log('Data:', {customer, item, price, time, tendered, change}); // Debug log
+                
+                // Update receipt content
+                document.getElementById('r-date').textContent = time;
+                document.getElementById('r-customer').textContent = customer;
+                document.getElementById('r-item').textContent = item;
+                document.getElementById('r-price').textContent = '₱' + price;
+                document.getElementById('r-tendered').textContent = '₱' + tendered;
+                document.getElementById('r-change').textContent = '₱' + change;
+                document.getElementById('r-total').textContent = '₱' + price;
+                
+                // Prepare text for email
+                const receiptText = `Date: ${time}\nCustomer: ${customer}\nItem: ${item}\nPrice: ₱${price}\n\nAmount Tendered: ₱${tendered}\nChange: ₱${change}\n\nTotal: ₱${price}`;
+                document.getElementById('hidden_receipt_text').value = receiptText;
+                
+                // Generate QR Code
+                const qrcodeContainer = document.getElementById('qrcode');
+                qrcodeContainer.innerHTML = ''; // Clear previous QR code
+                new QRCode(qrcodeContainer, {
+                    text: receiptText,
+                    width: 80,
+                    height: 80
+                });
+                
+                // Show modal
+                receiptModal.show();
             });
-            
-            receiptModal.show();
         });
     });
 
@@ -645,7 +689,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         const content = document.getElementById('receipt-preview').innerHTML;
         const printWindow = window.open('', '', 'height=600,width=800');
         printWindow.document.write('<html><head><title>Receipt</title>');
-        printWindow.document.write('<style>body{font-family: monospace; padding: 20px;} .receipt-row{display:flex; justify-content:space-between;} .receipt-divider{border-top:1px dashed #000; margin:10px 0;} #qrcode{display:flex; justify-content:center; margin-top:20px;}</style>');
+        printWindow.document.write('<style>body{font-family: monospace; padding: 20px;} .receipt-row{display:flex; justify-content:space-between;} .receipt-divider{border-top:1px dashed #000; margin:10px 0;} .receipt-header{text-align:center;} #qrcode{display:flex; justify-content:center; margin-top:20px;}</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write(content);
         printWindow.document.write('</body></html>');
@@ -657,7 +701,7 @@ $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
         const element = document.getElementById('receipt-preview');
         const opt = {
             margin: 1,
-            filename: 'receipt.pdf',
+            filename: 'receipt_' + new Date().getTime() + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }

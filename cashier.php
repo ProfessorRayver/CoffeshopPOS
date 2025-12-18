@@ -2,7 +2,7 @@
 session_start();
 
 // Check if user is logged in and is a cashier
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'cashier') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'cashier' && $_SESSION['role'] !== 'admin')) {
     header("Location: login.php");
     exit();
 }
@@ -17,6 +17,7 @@ if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 
 $message = "";
 $msgType = "";
+$receipt_data = null;
 
 // --- HANDLE LOGOUT ---
 if (isset($_GET['logout'])) {
@@ -29,6 +30,7 @@ if (isset($_GET['logout'])) {
 if (isset($_POST['process_order'])) {
     $customer = $_POST['customer_name'];
     $pid = $_POST['product_id'];
+    $amount_given = floatval($_POST['amount_given']);
     
     // Find Item in Menu
     $menu_check = mysqli_query($conn, "SELECT * FROM menu_tbl WHERE product_id = '$pid'");
@@ -37,14 +39,31 @@ if (isset($_POST['process_order'])) {
         $d_name = $menu_item['drink_name'];
         $d_price = $menu_item['price'];
         
-        // Add to Daily Sales
-        $insert = "INSERT INTO daily_sales (customer_name, product_id, drink_name, price) VALUES (?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $insert);
-        mysqli_stmt_bind_param($stmt, "sssd", $customer, $pid, $d_name, $d_price);
-        
-        if (mysqli_stmt_execute($stmt)) {
-            $message = "SOLD: $d_name to $customer - $" . number_format($d_price, 2);
-            $msgType = "success";
+        if ($amount_given < $d_price) {
+            $message = "Insufficient Payment! Price is ₱" . number_format($d_price, 2);
+            $msgType = "danger";
+        } else {
+            $change = $amount_given - $d_price;
+            
+            // Add to Daily Sales with Payment Info
+            $insert = "INSERT INTO daily_sales (customer_name, product_id, drink_name, price, amount_tendered, change_amount) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $insert);
+            mysqli_stmt_bind_param($stmt, "sssddd", $customer, $pid, $d_name, $d_price, $amount_given, $change);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                $message = "SOLD: $d_name to $customer - ₱" . number_format($d_price, 2);
+                $msgType = "success";
+                
+                // Prepare data for Receipt Modal
+                $receipt_data = [
+                    'customer' => $customer,
+                    'item' => $d_name,
+                    'price' => $d_price,
+                    'tendered' => $amount_given,
+                    'change' => $change,
+                    'date' => date('Y-m-d H:i:s')
+                ];
+            }
         }
     } else {
         $message = "Error: Product ID '$pid' not found!";
@@ -391,8 +410,11 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
                 <label>DRINK ID</label>
                 <input type="text" name="product_id" class="form-control" placeholder="See menu list on the right" required>
                 
+                <label>AMOUNT TENDERED (₱)</label>
+                <input type="number" step="0.01" name="amount_given" class="form-control" placeholder="e.g. 200.00" required>
+                
                 <button type="submit" name="process_order" class="btn btn-charge">
-                    <i class="fas fa-credit-card"></i> CHARGE
+                    <i class="fas fa-coins"></i> CHARGE
                 </button>
             </form>
         </div>
@@ -423,7 +445,7 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
                         <td><strong><?php echo $m['product_id']; ?></strong></td>
                         <td><?php echo $m['drink_name']; ?></td>
                         <td><?php echo $m['type']; ?></td>
-                        <td>$<?php echo number_format($m['price'], 2); ?></td>
+                        <td>₱<?php echo number_format($m['price'], 2); ?></td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -458,7 +480,47 @@ $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC
         <p>to streamline coffee shop operations and enhance customer experience.</p>
         <div class="developers">
             <i class="fas fa-code"></i> DEVELOPED BY:<br>
-            Char Mae Grace Bering & Rayver S. Reyes
+            Char Mae Grace Bering & Rayver S. Reyes & Sebastian Rafael Belando
+        </div>
+    </div>
+</div>
+
+<!-- TRANSACTION RECEIPT MODAL -->
+<div class="modal fade" id="transactionModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-check-circle"></i> TRANSACTION SUCCESSFUL</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <?php if ($receipt_data): ?>
+                <h3 class="mb-3">₱<?php echo number_format($receipt_data['change'], 2); ?></h3>
+                <p class="text-muted">CHANGE DUE</p>
+                
+                <hr class="my-4">
+                
+                <div class="row mb-2">
+                    <div class="col-6 text-start text-muted">Customer:</div>
+                    <div class="col-6 text-end fw-bold"><?php echo strtoupper($receipt_data['customer']); ?></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-start text-muted">Item:</div>
+                    <div class="col-6 text-end fw-bold"><?php echo $receipt_data['item']; ?></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-start text-muted">Price:</div>
+                    <div class="col-6 text-end">₱<?php echo number_format($receipt_data['price'], 2); ?></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-start text-muted">Cash Given:</div>
+                    <div class="col-6 text-end">₱<?php echo number_format($receipt_data['tendered'], 2); ?></div>
+                </div>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">OK</button>
+            </div>
         </div>
     </div>
 </div>
@@ -514,6 +576,12 @@ document.getElementById('menuSearch').addEventListener('keyup', function() {
         menuTable.style.display = 'table';
     }
 });
+
+// SHOW RECEIPT MODAL IF DATA EXISTS
+<?php if ($receipt_data): ?>
+const transactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
+transactionModal.show();
+<?php endif; ?>
 </script>
 </body>
 </html>
