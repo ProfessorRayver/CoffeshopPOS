@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-// Check if user is logged in and is a cashier
+// login sessions checking
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'cashier' && $_SESSION['role'] !== 'admin')) {
     header("Location: login.php");
     exit();
 }
 
-// --- DATABASE CONNECTION ---
+// database conn
 $DBHost = "localhost";
 $DBUser = "root";
 $DBPass = "";
@@ -19,20 +19,20 @@ $message = "";
 $msgType = "";
 $receipt_data = null;
 
-// --- HANDLE LOGOUT ---
+// log out function
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: login.php");
     exit();
 }
 
-// --- PROCESS POS ORDER ---
+// process order
 if (isset($_POST['process_order'])) {
     $customer = $_POST['customer_name'];
     $pid = $_POST['product_id'];
     $amount_given = floatval($_POST['amount_given']);
     
-    // Find Item in Menu
+    // search name of drink
     $menu_check = mysqli_query($conn, "SELECT * FROM menu_tbl WHERE product_id = '$pid'");
     if (mysqli_num_rows($menu_check) > 0) {
         $menu_item = mysqli_fetch_assoc($menu_check);
@@ -54,7 +54,7 @@ if (isset($_POST['process_order'])) {
                 $message = "SOLD: $d_name to $customer - ₱" . number_format($d_price, 2);
                 $msgType = "success";
                 
-                // Prepare data for Receipt Modal
+                // Prepare data for receipt Modal
                 $receipt_data = [
                     'customer' => $customer,
                     'item' => $d_name,
@@ -71,10 +71,10 @@ if (isset($_POST['process_order'])) {
     }
 }
 
-// --- FETCH MENU DATA ---
+// fetch of data
 $menu_data = mysqli_query($conn, "SELECT * FROM menu_tbl ORDER BY product_id ASC");
 
-// --- IDENTIFY BEST SELLER ---
+// suggestion of best seller
 $best_q = mysqli_query($conn, "SELECT product_id FROM daily_sales GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 1");
 $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['product_id'] : null;
 ?>
@@ -382,7 +382,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
 </head>
 <body>
 <div class="container-wrapper">
-    <!-- HEADER -->
+    <!-- header-->
     <div class="header-bar">
         <h1><i class="fas fa-cash-register"></i> CASHIER DASHBOARD</h1>
         <div class="user-info">
@@ -396,7 +396,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
     
-    <!-- MAIN TWO COLUMN LAYOUT -->
+    <!-- columns layout -->
     <div class="main-layout">
         <!-- LEFT: POS ORDER ENTRY -->
         <div class="panel panel-dark">
@@ -467,7 +467,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
     
-    <!-- COFFEE FACTS SECTION -->
+    <!-- coffee facts section -->
     <div class="coffee-facts-section">
         <div class="coffee-facts-content">
             <div class="facts-text">
@@ -496,6 +496,9 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
 </div>
+
+
+
 
 <!-- TRANSACTION RECEIPT MODAL -->
 <div class="modal fade" id="transactionModal" tabindex="-1" data-bs-backdrop="static">
@@ -534,15 +537,11 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
                     // 1. Detect the current server URL
                     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
                     $host = $_SERVER['HTTP_HOST'];
-                    
-                    // FIX: If running on localhost, try to find the computer's Wi-Fi IP address
-                    // This allows the phone to connect to the computer
                     if ($host === 'localhost' || $host === '127.0.0.1') {
                         $ip = gethostbyname(gethostname());
                         if ($ip !== '127.0.0.1' && $ip !== 'localhost') {
                             $host = $ip;
                         } else {
-                            // Fallback: Try to find a 192.168.x.x IP from ipconfig (Windows)
                             $out = [];
                             @exec('ipconfig', $out);
                             foreach($out as $line) {
@@ -555,10 +554,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
                     }
                     
                     $path = dirname($_SERVER['PHP_SELF']);
-                    // Clean up path slashes for URL
                     $path = rtrim(str_replace('\\', '/', $path), '/') . '/';
-                    
-                    // 2. Build the URL to receipt_view.php with parameters
                     $base_url = $protocol . "://" . $host . $path . "receipt_view.php";
                     $params = [
                         'date' => $receipt_data['date'],

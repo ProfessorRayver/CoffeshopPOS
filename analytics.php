@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// --- DATABASE CONNECTION ---
+// --- database conn ---
 $DBHost = "localhost";
 $DBUser = "root";
 $DBPass = "";
@@ -15,7 +15,7 @@ $DBName = "cafe_db";
 $conn = mysqli_connect($DBHost, $DBUser, $DBPass, $DBName);
 if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 
-// --- HANDLE LOGOUT ---
+// --- logout ---
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: login.php");

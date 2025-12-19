@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// --- DATABASE CONNECTION ---
+// --- database conn ---
 $DBHost = "localhost";
 $DBUser = "root";
 $DBPass = "";
@@ -18,7 +18,7 @@ if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 $message = "";
 $msgType = "";
 
-// --- HANDLE LOGOUT ---
+// ---  log out ---
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: login.php");
@@ -79,18 +79,6 @@ if (isset($_POST['reset_day'])) {
     $msgType = "dark";
 }
 
-// --- SEND RECEIPT EMAIL ---
-if (isset($_POST['send_email'])) {
-    $to = $_POST['email_to'];
-    $subject = "Your CRS Cafe Receipt";
-    $body = "Thank you for your purchase!\n\n" . $_POST['receipt_text'];
-    $headers = "From: no-reply@crscafe.com";
-    
-    // Note: mail() requires a configured mail server (e.g., Mercury/Sendmail in XAMPP)
-    $sent = @mail($to, $subject, $body, $headers); 
-    $message = "Receipt sent to $to"; 
-    $msgType = "success";
-}
 
 // --- EXPORT TO CSV ---
 if (isset($_POST['export_csv'])) {
@@ -110,13 +98,13 @@ if (isset($_POST['export_csv'])) {
     exit();
 }
 
-// --- FETCH DATA ---
+// ---  fetch of data ---
 $sales_data = mysqli_query($conn, "SELECT * FROM daily_sales ORDER BY sale_time DESC");
 $total_q = mysqli_query($conn, "SELECT SUM(price) as total FROM daily_sales");
 $grand_total = mysqli_fetch_assoc($total_q)['total'] ?? 0;
 
-// --- CALCULATE GOAL PROGRESS ---
-$daily_target = 5000.00; // Set your daily goal here
+// --- calculate the goal saless ---
+$daily_target = 5000.00; // <----   Set daily goal here
 $progress_pct = ($grand_total > 0) ? ($grand_total / $daily_target) * 100 : 0;
 $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
 ?>
@@ -426,7 +414,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
 </head>
 <body>
 <div class="container-wrapper">
-    <!-- HEADER -->
+    <!-- header -->
     <div class="header-bar">
         <h1><i class="fas fa-user-shield"></i> ADMIN DASHBOARD</h1>
         <div class="user-info">
@@ -445,7 +433,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         </div>
     </div>
     
-    <!-- MAIN VERTICAL LAYOUT -->
+    <!-- main panels -->
     <div class="main-layout">
         <!-- TOP: PRODUCT MANAGEMENT -->
         <div class="panel">
@@ -544,24 +532,24 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             
             <table class="table-custom">
                 <thead>
-                    <tr>
+                    <tr><b>
                         <th>TIME</th>
                         <th>CUSTOMER</th>
                         <th>ITEM</th>
                         <th>PRICE</th>
-                    </tr>
+            </b></tr>
                 </thead>
                 <tbody>
                     <?php 
                     if (mysqli_num_rows($sales_data) > 0) {
                         while($row = mysqli_fetch_assoc($sales_data)): 
                     ?>
-                    <tr>
+                    <tr> <b>
                         <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
                         <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
                         <td><?php echo $row['drink_name']; ?></td>
                         <td>₱<?php echo number_format($row['price'], 2); ?></td>
-                    </tr>
+                        </b> </tr>
                     <?php 
                         endwhile;
                     } else {
@@ -707,10 +695,6 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
                 document.getElementById('r-tendered').textContent = '₱' + tendered;
                 document.getElementById('r-change').textContent = '₱' + change;
                 document.getElementById('r-total').textContent = '₱' + price;
-                
-                // Prepare text for email
-                const receiptText = `Date: ${time}\nCustomer: ${customer}\nItem: ${item}\nPrice: ₱${price}\n\nAmount Tendered: ₱${tendered}\nChange: ₱${change}\n\nTotal: ₱${price}`;
-                document.getElementById('hidden_receipt_text').value = receiptText;
                 
                 // Generate QR Code
                 const qrcodeContainer = document.getElementById('qrcode');

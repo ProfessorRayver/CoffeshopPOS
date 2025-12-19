@@ -8,8 +8,6 @@ $DBPass = "";
 $DBName = "cafe_db";
 $conn = mysqli_connect($DBHost, $DBUser, $DBPass, $DBName);
 if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
-// --- DATABASE CONNECTION ---
-require_once 'db_connect.php';
 
 $error = "";
 
