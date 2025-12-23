@@ -252,11 +252,13 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             font-size: 1.1rem;
         }
         
-        /* TABLES */
+        /* --- TABLES & SCROLLING UPDATE --- */
         .table-custom {
             width: 100%;
             font-size: 0.9rem;
-            margin-bottom: 15px;
+            margin-bottom: 0; /* Remove bottom margin inside wrapper */
+            border-collapse: separate; 
+            border-spacing: 0;
         }
         
         .table-custom th {
@@ -265,15 +267,29 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             padding: 12px;
             font-size: 0.85rem;
             letter-spacing: 1px;
+            /* Sticky Header */
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         
         .table-custom td {
             padding: 12px;
             border-bottom: 1px solid #e0e0e0;
+            background: white; /* Ensure background isn't transparent */
         }
         
-        .table-custom tbody tr:hover {
+        .table-custom tbody tr:hover td {
             background: rgba(201,169,97,0.15);
+        }
+        
+        /* NEW: Scroll Container for Menu */
+        .menu-scroll-area {
+            max-height: 60vh; /* Adjust height limit */
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
         }
         
         .alert {
@@ -382,7 +398,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
 </head>
 <body>
 <div class="container-wrapper">
-    <!-- header-->
     <div class="header-bar">
         <h1><i class="fas fa-cash-register"></i> CASHIER DASHBOARD</h1>
         <div class="user-info">
@@ -396,9 +411,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
     
-    <!-- columns layout -->
     <div class="main-layout">
-        <!-- LEFT: POS ORDER ENTRY -->
         <div class="panel panel-dark">
             <div class="panel-header">
                 <i class="fas fa-shopping-cart"></i> ORDER ENTRY
@@ -424,7 +437,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             </form>
         </div>
         
-        <!-- RIGHT: MENU LIST -->
         <div class="panel">
             <div class="panel-header" style="color: var(--espresso);">
                 <i class="fas fa-book"></i> MENU CATALOG
@@ -435,31 +447,33 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
                 <i class="fas fa-search"></i>
             </div>
             
-            <table class="table-custom" id="menuTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>DRINK NAME</th>
-                        <th>TYPE</th>
-                        <th>PRICE</th>
-                    </tr>
-                </thead>
-                <tbody id="menuTableBody">
-                    <?php while($m = mysqli_fetch_assoc($menu_data)): ?>
-                    <tr>
-                        <td><strong><?php echo $m['product_id']; ?></strong></td>
-                        <td>
-                            <?php echo $m['drink_name']; ?>
-                            <?php if ($best_seller_id && $m['product_id'] == $best_seller_id): ?>
-                                <span class="badge bg-warning text-dark ms-2"><i class="fas fa-crown"></i> BEST SELLER</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?php echo $m['type']; ?></td>
-                        <td>₱<?php echo number_format($m['price'], 2); ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+            <div class="menu-scroll-area">
+                <table class="table-custom" id="menuTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>DRINK NAME</th>
+                            <th>TYPE</th>
+                            <th>PRICE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody">
+                        <?php while($m = mysqli_fetch_assoc($menu_data)): ?>
+                        <tr>
+                            <td><strong><?php echo $m['product_id']; ?></strong></td>
+                            <td>
+                                <?php echo $m['drink_name']; ?>
+                                <?php if ($best_seller_id && $m['product_id'] == $best_seller_id): ?>
+                                    <span class="badge bg-warning text-dark ms-2"><i class="fas fa-crown"></i> BEST SELLER</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo $m['type']; ?></td>
+                            <td>₱<?php echo number_format($m['price'], 2); ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
             <div id="noResults" class="no-results" style="display: none;">
                 <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
                 <p>No drinks found matching your search</p>
@@ -467,7 +481,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
     
-    <!-- coffee facts section -->
     <div class="coffee-facts-section">
         <div class="coffee-facts-content">
             <div class="facts-text">
@@ -483,7 +496,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         </div>
     </div>
     
-    <!-- ABOUT US SECTION -->
     <div class="about-section">
         <h2><i class="fas fa-users"></i> ABOUT US</h2>
         <p>This CRS Cafe Master System was crafted with passion and dedication</p>
@@ -497,10 +509,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
     </div>
 </div>
 
-
-
-
-<!-- TRANSACTION RECEIPT MODAL -->
 <div class="modal fade" id="transactionModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

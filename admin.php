@@ -130,13 +130,14 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             background: linear-gradient(135deg, var(--ivory) 0%, var(--cream) 100%); 
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
-            overflow-y: auto;
+            overflow-y: hidden; /* UPDATED: Prevent body scroll */
             padding: 20px;
         }
         
         .container-wrapper {
             max-width: 1600px;
             margin: 0 auto;
+            height: 100%; /* UPDATED */
         }
         
         /* HEADER BAR */
@@ -212,41 +213,57 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             color: white;
         }
         
-        /* VERTICAL LAYOUT - STACKED PANELS */
+        /* --- MAIN LAYOUT FIXED FOR ALIGNMENT --- */
         .main-layout {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 40% 60%;
             gap: 20px;
             margin-bottom: 20px;
+            height: calc(100vh - 140px); /* UPDATED: Fill remaining screen height */
         }
-        
-        /* PANELS */
+
+        /* PANEL STYLES UPDATED FOR FLEXBOX */
         .panel {
             background: white;
             border: 3px solid var(--gold);
             border-radius: 12px;
-            padding: 25px;
+            padding: 0; /* UPDATED: No padding on container, handled by children */
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* UPDATED: Clean corners */
         }
-        
+
+        .panel-padding {
+            padding: 20px; /* Helper for content that needs padding */
+            overflow-y: auto;
+        }
+
         .panel-header {
+            background: white;
             font-size: 1.4rem;
             font-weight: bold;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid currentColor;
+            padding: 20px;
+            border-bottom: 3px solid var(--gold);
             display: flex;
             align-items: center;
             gap: 10px;
             color: var(--espresso);
+            flex-shrink: 0; /* UPDATED: Prevent shrinking */
         }
         
+        /* UPDATED: SCROLLABLE TABLE AREA */
+        .table-scroll-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
         /* TABLES */
         .table-custom {
             width: 100%;
             font-size: 0.9rem;
-            margin-bottom: 15px;
+            border-collapse: collapse; /* UPDATED */
         }
         
         .table-custom th {
@@ -255,6 +272,9 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             padding: 12px;
             font-size: 0.85rem;
             letter-spacing: 1px;
+            position: sticky; /* UPDATED */
+            top: 0;
+            z-index: 10;
         }
         
         .table-custom td {
@@ -266,17 +286,14 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             background: rgba(201,169,97,0.15);
         }
         
-        /* TOTAL DISPLAY */
+        /* UPDATED: TOTAL FOOTER FIXED TO BOTTOM */
         .total-display {
             background: var(--espresso);
             color: var(--gold);
-            padding: 18px;
+            padding: 20px;
             text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 10px;
-            border: 3px solid var(--gold);
-            margin-top: 15px;
+            border-top: 3px solid var(--gold);
+            flex-shrink: 0;
         }
         
         /* ADMIN TABS */
@@ -414,7 +431,6 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
 </head>
 <body>
 <div class="container-wrapper">
-    <!-- header -->
     <div class="header-bar">
         <h1><i class="fas fa-user-shield"></i> ADMIN DASHBOARD</h1>
         <div class="user-info">
@@ -433,137 +449,142 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         </div>
     </div>
     
-    <!-- main panels -->
     <div class="main-layout">
-        <!-- TOP: PRODUCT MANAGEMENT -->
         <div class="panel">
             <div class="panel-header">
                 <i class="fas fa-tools"></i> PRODUCT MANAGEMENT
             </div>
             
-            <?php if ($message): ?>
-                <div class="alert alert-<?php echo $msgType; ?>"><?php echo $message; ?></div>
-            <?php endif; ?>
-            
-            <ul class="nav nav-tabs" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#add">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#update">
-                        <i class="fas fa-edit"></i> Update
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#remove">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>
-                </li>
-            </ul>
-            
-            <div class="tab-content">
-                <!-- ADD TAB -->
-                <div class="tab-pane fade show active" id="add">
-                    <form method="POST" class="row g-3">
-                        <div class="col-6">
-                            <input type="text" name="new_pid" class="form-control form-control-sm" placeholder="Product ID" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="new_name" class="form-control form-control-sm" placeholder="Drink Name" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="text" name="new_type" class="form-control form-control-sm" placeholder="Type (e.g., Hot, Cold)" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="number" step="0.01" name="new_price" class="form-control form-control-sm" placeholder="Price" required>
-                        </div>
-                        <button type="submit" name="add_drink" class="btn btn-success btn-sm w-100">
-                            <i class="fas fa-plus-circle"></i> Add New Item to Menu
+            <div class="panel-padding">
+                <?php if ($message): ?>
+                    <div class="alert alert-<?php echo $msgType; ?>"><?php echo $message; ?></div>
+                <?php endif; ?>
+                
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#add">
+                            <i class="fas fa-plus"></i> Add
                         </button>
-                    </form>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#update">
+                            <i class="fas fa-edit"></i> Update
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#remove">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="add">
+                        <form method="POST" class="row g-3">
+                            <div class="col-6">
+                                <input type="text" name="new_pid" class="form-control form-control-sm" placeholder="Product ID" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="new_name" class="form-control form-control-sm" placeholder="Drink Name" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="new_type" class="form-control form-control-sm" placeholder="Type (e.g., Hot, Cold)" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="number" step="0.01" name="new_price" class="form-control form-control-sm" placeholder="Price" required>
+                            </div>
+                            <button type="submit" name="add_drink" class="btn btn-success btn-sm w-100">
+                                <i class="fas fa-plus-circle"></i> Add New Item to Menu
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="update">
+                        <form method="POST" class="row g-3">
+                            <div class="col-6">
+                                <input type="text" name="update_pid" class="form-control form-control-sm" placeholder="Product ID" required>
+                            </div>
+                            <div class="col-6">
+                                <input type="number" step="0.01" name="update_price" class="form-control form-control-sm" placeholder="New Price" required>
+                            </div>
+                            <button type="submit" name="update_drink" class="btn btn-warning btn-sm w-100">
+                                <i class="fas fa-edit"></i> Update Price
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="remove">
+                        <form method="POST">
+                            <input type="text" name="remove_pid" class="form-control form-control-sm mb-3" placeholder="Product ID to Delete" required>
+                            <button type="submit" name="remove_drink" class="btn btn-danger btn-sm w-100" onclick="return confirm('Are you sure you want to delete this item?')">
+                                <i class="fas fa-trash-alt"></i> Delete Item Permanently
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 
-                <!-- UPDATE TAB -->
-                <div class="tab-pane fade" id="update">
-                    <form method="POST" class="row g-3">
-                        <div class="col-6">
-                            <input type="text" name="update_pid" class="form-control form-control-sm" placeholder="Product ID" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="number" step="0.01" name="update_price" class="form-control form-control-sm" placeholder="New Price" required>
-                        </div>
-                        <button type="submit" name="update_drink" class="btn btn-warning btn-sm w-100">
-                            <i class="fas fa-edit"></i> Update Price
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- REMOVE TAB -->
-                <div class="tab-pane fade" id="remove">
-                    <form method="POST">
-                        <input type="text" name="remove_pid" class="form-control form-control-sm mb-3" placeholder="Product ID to Delete" required>
-                        <button type="submit" name="remove_drink" class="btn btn-danger btn-sm w-100" onclick="return confirm('Are you sure you want to delete this item?')">
-                            <i class="fas fa-trash-alt"></i> Delete Item Permanently
-                        </button>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- RESET DAY BUTTON -->
-            <form method="POST" onsubmit="return confirm('WARNING: This will delete all sales history for today. Continue?');">
-                <button type="submit" name="reset_day" class="btn btn-reset">
-                    <i class="fas fa-power-off"></i> END DAY / RESET SALES
-                </button>
-            </form>
-        </div>
-        
-        <!-- BOTTOM: TODAY'S SALES -->
-        <div class="panel">
-            <div class="panel-header">
-                <i class="fas fa-receipt"></i> TODAY'S SALES
-                <form method="POST" style="margin-left: auto;">
-                    <button type="submit" name="export_csv" class="btn btn-success btn-sm" style="margin-top: 0;">
-                        <i class="fas fa-file-csv"></i> Export CSV
+                <form method="POST" onsubmit="return confirm('WARNING: This will delete all sales history for today. Continue?');">
+                    <button type="submit" name="reset_day" class="btn btn-reset">
+                        <i class="fas fa-power-off"></i> END DAY / RESET SALES
                     </button>
                 </form>
             </div>
             
-            <table class="table-custom">
-                <thead>
-                    <tr><b>
-                        <th>TIME</th>
-                        <th>CUSTOMER</th>
-                        <th>ITEM</th>
-                        <th>PRICE</th>
-            </b></tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    if (mysqli_num_rows($sales_data) > 0) {
-                        while($row = mysqli_fetch_assoc($sales_data)): 
-                    ?>
-                    <tr> <b>
-                        <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
-                        <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
-                        <td><?php echo $row['drink_name']; ?></td>
-                        <td>₱<?php echo number_format($row['price'], 2); ?></td>
-                        </b> </tr>
-                    <?php 
-                        endwhile;
-                    } else {
-                        echo '<tr><td colspan="4" style="text-align: center; color: #999; padding: 60px;">No sales recorded yet</td></tr>';
-                    }
-                    ?>
-                </tbody>
-            </table>
+             <div style="margin-top: auto; padding: 20px; text-align: center; border-top: 1px solid #eee; font-size: 0.8rem; color: #888;">
+                <i class="fas fa-code"></i> Developed by: Rayver S. Reyes, Char Mae Grace Bering, Sebastian Rafael Belando
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span><i class="fas fa-receipt"></i> TODAY'S SALES</span>
+                    <form method="POST" style="margin: 0;">
+                        <button type="submit" name="export_csv" class="btn btn-success btn-sm" style="margin: 0;">
+                            <i class="fas fa-file-csv"></i> Export CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="table-scroll-area">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">TIME</th>
+                            <th style="width: 35%;">CUSTOMER</th>
+                            <th style="width: 30%;">ITEM</th>
+                            <th style="width: 20%; text-align: right;">PRICE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        if (mysqli_num_rows($sales_data) > 0) {
+                            mysqli_data_seek($sales_data, 0); 
+                            while($row = mysqli_fetch_assoc($sales_data)): 
+                        ?>
+                        <tr>
+                            <td><?php echo date('H:i', strtotime($row['sale_time'])); ?></td>
+                            <td><?php echo strtoupper(substr($row['customer_name'], 0, 15)); ?></td>
+                            <td><?php echo $row['drink_name']; ?></td>
+                            <td style="text-align: right; font-weight: bold;">₱<?php echo number_format($row['price'], 2); ?></td>
+                        </tr>
+                        <?php 
+                            endwhile;
+                        } else {
+                            echo '<tr><td colspan="4" style="text-align: center; color: #999; padding: 60px;">No sales recorded yet</td></tr>';
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
             
             <div class="total-display">
-                TOTAL: ₱<?php echo number_format($grand_total, 2); ?>
+                <div style="font-size: 1.8rem; margin-bottom: 10px; font-weight: bold;">
+                    TOTAL: ₱<?php echo number_format($grand_total, 2); ?>
+                </div>
                 
-                <!-- PROGRESS BAR -->
-                <div style="margin-top: 15px; font-size: 0.9rem; text-align: left;">
+                <div style="font-size: 0.9rem; text-align: left;">
                     <div class="d-flex justify-content-between mb-1">
                         <span style="color: var(--gold);">Daily Goal: <?php echo number_format($progress_pct, 0); ?>%</span>
                         <span style="color: var(--gold);">Target: ₱<?php echo number_format($daily_target); ?></span>
@@ -576,22 +597,8 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             </div>
         </div>
     </div>
-    
-    <!-- ABOUT US SECTION -->
-    <div class="about-section">
-        <h2><i class="fas fa-users"></i> ABOUT US</h2>
-        <p>This CRS Cafe Master System was crafted with passion and dedication</p>
-        <p>to streamline coffee shop operations and enhance customer experience.</p>
-        <div class="developers">
-            <i class="fas fa-code"></i> DEVELOPED BY:<br>
-              Rayver S. Reyes - full stack developer / project lead
-            <br> Char Mae Grace Bering - backend developer & database handler 
-            <br>Sebastian Rafael Belando - backend developer
-        </div>
-    </div>
 </div>
 
-<!-- RECEIPT MODAL -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -600,7 +607,6 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Receipt Preview Area -->
                 <div id="receipt-preview">
                     <div class="receipt-header">
                         <h4>CRS CAFE MASTER</h4>
@@ -641,7 +647,6 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
                     </div>
                 </div>
                 
-                <!-- Email Form -->
                 <form method="POST" class="mt-3 border-top pt-3">
                     <label class="form-label"><i class="fas fa-envelope"></i> Email Receipt:</label>
                     <div class="input-group">
@@ -696,11 +701,15 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
                 document.getElementById('r-change').textContent = '₱' + change;
                 document.getElementById('r-total').textContent = '₱' + price;
                 
+                // Create Receipt Text for QR Code
+                // We define it here so it's available for the QR code generation
+                const receiptText = `RECEIPT\nDate: ${time}\nCustomer: ${customer}\nItem: ${item}\nTotal: ₱${price}`;
+
                 // Generate QR Code
                 const qrcodeContainer = document.getElementById('qrcode');
                 qrcodeContainer.innerHTML = ''; // Clear previous QR code
                 new QRCode(qrcodeContainer, {
-                    text: receiptText,
+                    text: receiptText, 
                     width: 80,
                     height: 80
                 });
