@@ -26,7 +26,7 @@ if (isset($_POST['login'])) {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
         
-        // Verify password (plain text comparison - in production use password_hash/password_verify)
+        // Verify password
         if ($password === $user['password']) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
@@ -64,11 +64,25 @@ if (isset($_POST['login'])) {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            background: linear-gradient(135deg, var(--ivory) 0%, var(--cream) 100%); 
+            /* Fallback background if video doesn't load */
+            background: linear-gradient(135deg, #2c241b 0%, #4a3b2a 100%); 
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
             padding: 20px;
             overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- VIDEO BACKGROUND STYLES --- */
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1; /* Places video behind everything */
+            object-fit: cover; /* Ensures video covers screen without stretching */
+            filter: brightness(0.4); /* Darkens video so login form stands out */
         }
         
         .page-wrapper {
@@ -79,13 +93,15 @@ if (isset($_POST['login'])) {
         }
         
         .login-container {
-            background: white;
+            /* Made background slightly transparent white to show video blur behind it */
+            background: rgba(255, 255, 255, 0.95);
             border: 4px solid var(--gold);
             border-radius: 20px;
             padding: 60px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
             max-width: 500px;
             width: 100%;
+            backdrop-filter: blur(5px); /* Modern frosted glass effect */
         }
         
         .login-header {
@@ -97,6 +113,8 @@ if (isset($_POST['login'])) {
             max-width: 150px;
             height: auto;
             margin-bottom: 20px;
+            border-radius: 50%; /* Optional: Makes logo round */
+            border: 3px solid var(--gold);
         }
         
         .login-header h1 {
@@ -128,6 +146,7 @@ if (isset($_POST['login'])) {
             border-radius: 10px;
             margin-bottom: 25px;
             font-family: 'Courier New', monospace;
+            background: rgba(255,255,255,0.9);
         }
         
         .form-control:focus {
@@ -162,7 +181,7 @@ if (isset($_POST['login'])) {
         }
         
         .demo-info {
-            background: rgba(201, 169, 97, 0.1);
+            background: rgba(201, 169, 97, 0.15);
             border: 2px dashed var(--gold);
             padding: 20px;
             border-radius: 10px;
@@ -172,7 +191,7 @@ if (isset($_POST['login'])) {
         }
         
         .demo-info strong {
-            color: var(--gold);
+            color: #8B4513; /* Darker brown for better readability */
         }
         
         .demo-info code {
@@ -180,6 +199,7 @@ if (isset($_POST['login'])) {
             padding: 4px 8px;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
+            font-weight: bold;
         }
         
         .password-container {
@@ -204,7 +224,7 @@ if (isset($_POST['login'])) {
 
         /* MINI GAME STYLES */
         .game-section {
-            background: rgba(201, 169, 97, 0.1);
+            background: rgba(255, 255, 255, 0.5);
             border: 2px solid var(--gold);
             padding: 20px;
             border-radius: 10px;
@@ -213,7 +233,6 @@ if (isset($_POST['login'])) {
             position: relative;
         }
 
-        /* Separator line between login info and game */
         .game-section::before {
             content: '';
             position: absolute;
@@ -222,7 +241,7 @@ if (isset($_POST['login'])) {
             width: 80%;
             height: 2px;
             background: var(--gold);
-            opacity: 0.3;
+            opacity: 0.8;
         }
 
         .game-title {
@@ -279,6 +298,11 @@ if (isset($_POST['login'])) {
     </style>
 </head>
 <body>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="intro.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
     <div class="page-wrapper">
         <div class="login-container">
         <div class="login-header">
@@ -314,7 +338,6 @@ if (isset($_POST['login'])) {
             <strong>Cashier:</strong> <code>cashier/cashier123</code>
         </div>
 
-        <!-- MINI GAME SECTION -->
         <div class="game-section">
             <div class="game-title">
                 <i class="fas fa-gamepad"></i> COFFEE BEAN CATCHER

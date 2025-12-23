@@ -95,11 +95,25 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            background: linear-gradient(135deg, var(--ivory) 0%, var(--cream) 100%); 
+            /* Fallback background */
+            background: linear-gradient(135deg, #2c241b 0%, #4a3b2a 100%); 
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
             overflow-y: auto;
             padding: 20px;
+            position: relative;
+        }
+
+        /* --- VIDEO BACKGROUND STYLES --- */
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            filter: brightness(0.5); /* Darkens video so text is readable */
         }
         
         .container-wrapper {
@@ -107,9 +121,9 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             margin: 0 auto;
         }
         
-        /* HEADER BAR */
+        /* HEADER BAR (Glass Effect) */
         .header-bar {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.9); /* Espresso with opacity */
             color: var(--gold);
             padding: 20px 30px;
             border-radius: 12px;
@@ -118,6 +132,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
         
         .header-bar h1 {
@@ -161,18 +176,19 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             margin-bottom: 20px;
         }
         
-        /* LARGE PANELS */
+        /* LARGE PANELS (Glass Effect) */
         .panel {
-            background: white;
+            background: rgba(255, 255, 255, 0.92); /* White with transparency */
             border: 3px solid var(--gold);
             border-radius: 12px;
             padding: 25px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             min-height: 400px;
+            backdrop-filter: blur(5px);
         }
         
         .panel-dark {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.9); /* Espresso with transparency */
             color: var(--gold);
         }
         
@@ -240,7 +256,7 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             border: 2px solid var(--gold);
             border-radius: 8px;
             font-size: 0.95rem;
-            background: white;
+            background: rgba(255, 255, 255, 0.8);
         }
         
         .search-box i {
@@ -252,11 +268,11 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             font-size: 1.1rem;
         }
         
-        /* --- TABLES & SCROLLING UPDATE --- */
+        /* TABLES */
         .table-custom {
             width: 100%;
             font-size: 0.9rem;
-            margin-bottom: 0; /* Remove bottom margin inside wrapper */
+            margin-bottom: 0;
             border-collapse: separate; 
             border-spacing: 0;
         }
@@ -267,7 +283,6 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
             padding: 12px;
             font-size: 0.85rem;
             letter-spacing: 1px;
-            /* Sticky Header */
             position: sticky;
             top: 0;
             z-index: 10;
@@ -276,20 +291,21 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         .table-custom td {
             padding: 12px;
             border-bottom: 1px solid #e0e0e0;
-            background: white; /* Ensure background isn't transparent */
+            background: rgba(255, 255, 255, 0.4); /* Transparent rows */
         }
         
         .table-custom tbody tr:hover td {
-            background: rgba(201,169,97,0.15);
+            background: rgba(201,169,97,0.25);
         }
-        
-        /* NEW: Scroll Container for Menu */
+
+        /* SCROLL CONTAINER FOR MENU */
         .menu-scroll-area {
-            max-height: 60vh; /* Adjust height limit */
+            max-height: 60vh;
             overflow-y: auto;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.3);
         }
         
         .alert {
@@ -302,18 +318,19 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         .no-results {
             text-align: center;
             padding: 40px;
-            color: #999;
+            color: #555;
             font-size: 1rem;
         }
         
         /* COFFEE FACTS SECTION */
         .coffee-facts-section {
-            background: white;
+            background: rgba(255, 255, 255, 0.92);
             border: 3px solid var(--gold);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            backdrop-filter: blur(5px);
         }
         
         .coffee-facts-content {
@@ -359,13 +376,14 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
         
         /* ABOUT US SECTION */
         .about-section {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.95);
             color: var(--gold);
             border: 3px solid var(--gold);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             text-align: center;
+            backdrop-filter: blur(5px);
         }
         
         .about-section h2 {
@@ -397,6 +415,11 @@ $best_seller_id = (mysqli_num_rows($best_q) > 0) ? mysqli_fetch_assoc($best_q)['
     </style>
 </head>
 <body>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="adminvideo.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
 <div class="container-wrapper">
     <div class="header-bar">
         <h1><i class="fas fa-cash-register"></i> CASHIER DASHBOARD</h1>

@@ -127,22 +127,36 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            background: linear-gradient(135deg, var(--ivory) 0%, var(--cream) 100%); 
+            /* Fallback background if video doesn't load */
+            background: linear-gradient(135deg, #2c241b 0%, #4a3b2a 100%); 
             font-family: 'Courier New', monospace; 
             min-height: 100vh;
-            overflow-y: hidden; /* UPDATED: Prevent body scroll */
+            overflow-y: hidden;
             padding: 20px;
+            position: relative;
+        }
+
+        /* --- VIDEO BACKGROUND STYLES --- */
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            filter: brightness(0.5); /* Darken video slightly so text pops */
         }
         
         .container-wrapper {
             max-width: 1600px;
             margin: 0 auto;
-            height: 100%; /* UPDATED */
+            height: 100%;
         }
         
-        /* HEADER BAR */
+        /* HEADER BAR (Slightly Transparent) */
         .header-bar {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.95); /* Espresso with slight opacity */
             color: var(--gold);
             padding: 20px 30px;
             border-radius: 12px;
@@ -151,6 +165,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
         
         .header-bar h1 {
@@ -213,34 +228,35 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             color: white;
         }
         
-        /* --- MAIN LAYOUT FIXED FOR ALIGNMENT --- */
+        /* --- MAIN LAYOUT --- */
         .main-layout {
             display: grid;
             grid-template-columns: 40% 60%;
             gap: 20px;
             margin-bottom: 20px;
-            height: calc(100vh - 140px); /* UPDATED: Fill remaining screen height */
+            height: calc(100vh - 140px);
         }
 
-        /* PANEL STYLES UPDATED FOR FLEXBOX */
+        /* PANEL STYLES (Glassmorphism Effect) */
         .panel {
-            background: white;
+            background: rgba(255, 255, 255, 0.92); /* White with slight transparency */
             border: 3px solid var(--gold);
             border-radius: 12px;
-            padding: 0; /* UPDATED: No padding on container, handled by children */
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            padding: 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* UPDATED: Clean corners */
+            overflow: hidden;
+            backdrop-filter: blur(5px);
         }
 
         .panel-padding {
-            padding: 20px; /* Helper for content that needs padding */
+            padding: 20px;
             overflow-y: auto;
         }
 
         .panel-header {
-            background: white;
+            background: rgba(255, 255, 255, 0.5); /* Semi-transparent header */
             font-size: 1.4rem;
             font-weight: bold;
             padding: 20px;
@@ -249,10 +265,10 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             align-items: center;
             gap: 10px;
             color: var(--espresso);
-            flex-shrink: 0; /* UPDATED: Prevent shrinking */
+            flex-shrink: 0;
         }
         
-        /* UPDATED: SCROLLABLE TABLE AREA */
+        /* SCROLLABLE TABLE AREA */
         .table-scroll-area {
             flex-grow: 1;
             overflow-y: auto;
@@ -263,7 +279,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         .table-custom {
             width: 100%;
             font-size: 0.9rem;
-            border-collapse: collapse; /* UPDATED */
+            border-collapse: collapse;
         }
         
         .table-custom th {
@@ -272,7 +288,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             padding: 12px;
             font-size: 0.85rem;
             letter-spacing: 1px;
-            position: sticky; /* UPDATED */
+            position: sticky;
             top: 0;
             z-index: 10;
         }
@@ -280,15 +296,17 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         .table-custom td {
             padding: 12px;
             border-bottom: 1px solid #e0e0e0;
+            /* Ensure text is readable against semi-transparent bg */
+            background: rgba(255,255,255,0.4); 
         }
         
-        .table-custom tbody tr:hover {
-            background: rgba(201,169,97,0.15);
+        .table-custom tbody tr:hover td {
+            background: rgba(201,169,97,0.25);
         }
         
-        /* UPDATED: TOTAL FOOTER FIXED TO BOTTOM */
+        /* TOTAL FOOTER */
         .total-display {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.95); /* Espresso with opacity */
             color: var(--gold);
             padding: 20px;
             text-align: center;
@@ -328,6 +346,7 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
             font-size: 0.9rem;
             border: 2px solid #ddd;
             border-radius: 6px;
+            background: rgba(255,255,255,0.8);
         }
         
         .btn-sm {
@@ -364,13 +383,14 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
         
         /* ABOUT US SECTION */
         .about-section {
-            background: var(--espresso);
+            background: rgba(26, 15, 10, 0.95);
             color: var(--gold);
             border: 3px solid var(--gold);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             text-align: center;
+            backdrop-filter: blur(5px);
         }
         
         .about-section h2 {
@@ -430,6 +450,11 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
     </style>
 </head>
 <body>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="adminvideo.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
 <div class="container-wrapper">
     <div class="header-bar">
         <h1><i class="fas fa-user-shield"></i> ADMIN DASHBOARD</h1>
@@ -702,7 +727,6 @@ $progress_color = ($progress_pct >= 100) ? 'success' : 'warning';
                 document.getElementById('r-total').textContent = '₱' + price;
                 
                 // Create Receipt Text for QR Code
-                // We define it here so it's available for the QR code generation
                 const receiptText = `RECEIPT\nDate: ${time}\nCustomer: ${customer}\nItem: ${item}\nTotal: ₱${price}`;
 
                 // Generate QR Code
