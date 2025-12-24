@@ -26,8 +26,44 @@ if (isset($_GET['logout'])) {
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d', strtotime('-30 days'));
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 
+// --- EMPLOYEE PERFORMANCE (Updated Query) ---
+// Now excludes 'admin', 'cashier', and 'superadmin' from the visual list
+$employee_query = "
+    SELECT 
+        u.id,
+        u.username,
+        u.role,
+        COUNT(ds.sale_time) as total_transactions,
+        COALESCE(SUM(ds.price), 0) as total_sales,
+        COALESCE(AVG(ds.price), 0) as avg_transaction,
+        MIN(ds.sale_time) as first_sale,
+        MAX(ds.sale_time) as last_sale
+    FROM users u
+    LEFT JOIN daily_sales ds ON u.id = ds.cashier_id 
+        AND DATE(ds.sale_time) BETWEEN ? AND ?
+    WHERE u.role IN ('cashier', 'admin')
+    AND u.username NOT IN ('admin', 'cashier', 'superadmin') 
+    GROUP BY u.id, u.username, u.role
+    ORDER BY total_sales DESC
+";
+$stmt = mysqli_prepare($conn, $employee_query);
+mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
+mysqli_stmt_execute($stmt);
+$employee_result = mysqli_stmt_get_result($stmt);
+
+$employee_data = [];
+$top_employee = ['name' => 'N/A', 'sales' => 0];
+
+while($row = mysqli_fetch_assoc($employee_result)) {
+    $employee_data[] = $row;
+    
+    // Only count as top employee if they actually made sales
+    if ($row['total_sales'] > 0 && $row['total_sales'] > $top_employee['sales']) {
+        $top_employee = ['name' => $row['username'], 'sales' => $row['total_sales']];
+    }
+}
+
 // --- DAILY SALES PATTERN ---
-// Get sales by date
 $daily_query = "
     SELECT 
         DATE_FORMAT(sale_time, '%b %d') as date_label,
@@ -124,7 +160,7 @@ while($row = mysqli_fetch_assoc($products_result)) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Analytics - CRS Cafe System</title>
+    <title>Analytics - CSR Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -144,7 +180,63 @@ while($row = mysqli_fetch_assoc($products_result)) {
             min-height: 100vh;
             overflow-y: auto;
             padding: 20px;
+            transition: background 0.3s, color 0.3s;
         }
+        
+        /* --- NIGHT MODE STYLES --- */
+        body.night-mode {
+            background: linear-gradient(135deg, #0f0806 0%, #1a0f0a 100%);
+            color: var(--ivory);
+        }
+        
+        body.night-mode .header-bar {
+            background: #000;
+            border: 1px solid #333;
+        }
+        
+        body.night-mode .stat-card, 
+        body.night-mode .panel,
+        body.night-mode .filter-bar {
+            background: #2c241b; /* Dark coffee brown */
+            border-color: #5d4037;
+            color: var(--ivory);
+        }
+        
+        body.night-mode .stat-card.highlight {
+            background: var(--gold);
+            color: var(--espresso);
+        }
+        
+        body.night-mode .panel-header {
+            color: var(--gold);
+            border-bottom-color: #5d4037;
+        }
+        
+        body.night-mode .table-custom th {
+            background: #1a0f0a;
+            color: var(--gold);
+        }
+        
+        body.night-mode .table-custom td {
+            border-bottom-color: #4a3b2a;
+            color: #ddd;
+        }
+        
+        body.night-mode .table-custom tbody tr:hover {
+            background: rgba(201, 169, 97, 0.1);
+        }
+        
+        body.night-mode label {
+            color: var(--gold);
+        }
+        
+        body.night-mode input {
+            background: #1a0f0a;
+            color: var(--ivory);
+            border-color: var(--gold);
+        }
+        
+        /* ----------------------- */
         
         .container-wrapper {
             max-width: 1800px;
@@ -155,18 +247,19 @@ while($row = mysqli_fetch_assoc($products_result)) {
         .header-bar {
             background: var(--espresso);
             color: var(--gold);
-            padding: 20px 30px;
+            padding: 25px 35px;
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s;
         }
         
         .header-bar h1 {
             margin: 0;
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -175,15 +268,17 @@ while($row = mysqli_fetch_assoc($products_result)) {
         .nav-links {
             display: flex;
             gap: 15px;
+            align-items: center;
         }
         
         .nav-links a {
             background: var(--gold);
             color: var(--espresso);
-            padding: 8px 20px;
+            padding: 12px 25px;
             border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
+            font-size: 1.1rem;
             transition: all 0.3s;
         }
         
@@ -192,16 +287,35 @@ while($row = mysqli_fetch_assoc($products_result)) {
             transform: scale(1.05);
         }
         
+        /* Night Mode Toggle Button */
+        .btn-theme-toggle {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-theme-toggle:hover {
+            background: var(--gold);
+            color: var(--espresso);
+        }
+        
         /* DATE FILTER */
         .filter-bar {
             background: white;
             border: 3px solid var(--gold);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
             display: flex;
-            gap: 15px;
+            gap: 20px;
             align-items: center;
+            font-size: 1.1rem;
+            transition: background 0.3s;
         }
         
         .filter-bar label {
@@ -210,18 +324,20 @@ while($row = mysqli_fetch_assoc($products_result)) {
         }
         
         .filter-bar input {
-            padding: 8px;
+            padding: 10px;
             border: 2px solid var(--gold);
             border-radius: 6px;
+            font-size: 1rem;
         }
         
         .filter-bar button {
             background: var(--espresso);
             color: var(--gold);
             border: none;
-            padding: 10px 25px;
+            padding: 12px 30px;
             border-radius: 6px;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
         }
         
@@ -229,17 +345,18 @@ while($row = mysqli_fetch_assoc($products_result)) {
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 25px;
+            margin-bottom: 25px;
         }
         
         .stat-card {
             background: white;
             border: 3px solid var(--gold);
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
             text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: background 0.3s;
         }
         
         .stat-card.highlight {
@@ -248,19 +365,20 @@ while($row = mysqli_fetch_assoc($products_result)) {
         }
         
         .stat-card i {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            margin-bottom: 15px;
         }
         
         .stat-card .value {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 15px 0;
         }
         
         .stat-card .label {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             letter-spacing: 1px;
+            font-weight: bold;
         }
         
         /* PANELS */
@@ -268,51 +386,52 @@ while($row = mysqli_fetch_assoc($products_result)) {
             background: white;
             border: 3px solid var(--gold);
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            transition: background 0.3s;
         }
         
         .panel-header {
-            font-size: 1.4rem;
+            font-size: 1.6rem;
             font-weight: bold;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
             border-bottom: 3px solid var(--gold);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             color: var(--espresso);
         }
         
         .charts-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 25px;
+            margin-bottom: 25px;
         }
         
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 450px;
         }
         
         /* TABLES */
         .table-custom {
             width: 100%;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
         }
         
         .table-custom th {
             background: var(--espresso);
             color: white;
-            padding: 12px;
-            font-size: 0.85rem;
+            padding: 15px;
+            font-size: 1rem;
             letter-spacing: 1px;
         }
         
         .table-custom td {
-            padding: 12px;
+            padding: 15px;
             border-bottom: 1px solid #e0e0e0;
         }
         
@@ -323,10 +442,10 @@ while($row = mysqli_fetch_assoc($products_result)) {
         .rank-badge {
             background: var(--gold);
             color: var(--espresso);
-            padding: 4px 10px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.8rem;
+            font-size: 0.95rem;
         }
         
         .rank-badge.gold {
@@ -340,20 +459,35 @@ while($row = mysqli_fetch_assoc($products_result)) {
         .rank-badge.bronze {
             background: #CD7F32;
         }
+        
+        /* Performance Indicator */
+        .performance-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .perf-excellent { background: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
+        .perf-good { background: #FFC107; box-shadow: 0 0 5px #FFC107; }
+        .perf-average { background: #FF9800; }
+        .perf-low { background: #F44336; }
     </style>
 </head>
 <body>
 <div class="container-wrapper">
-    <!-- HEADER -->
     <div class="header-bar">
         <h1><i class="fas fa-chart-line"></i> SALES ANALYTICS</h1>
         <div class="nav-links">
+            <button id="themeToggle" class="btn-theme-toggle" title="Toggle Night Mode">
+                <i class="fas fa-moon"></i>
+            </button>
             <a href="admin.php"><i class="fas fa-arrow-left"></i> Back to Admin</a>
             <a href="?logout=1"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
     
-    <!-- DATE FILTER -->
     <form class="filter-bar" method="GET">
         <label><i class="fas fa-calendar"></i> From:</label>
         <input type="date" name="start_date" value="<?php echo $start_date; ?>" required>
@@ -364,7 +498,6 @@ while($row = mysqli_fetch_assoc($products_result)) {
         <button type="submit"><i class="fas fa-filter"></i> Apply Filter</button>
     </form>
     
-    <!-- STATS CARDS -->
     <div class="stats-grid">
         <div class="stat-card highlight">
             <i class="fas fa-star"></i>
@@ -373,25 +506,101 @@ while($row = mysqli_fetch_assoc($products_result)) {
         </div>
         
         <div class="stat-card">
-            <i class="fas fa-dollar-sign"></i>
+            <i class="fas fa-peso-sign"></i>
             <div class="value">₱<?php echo number_format($peak_day['sales'], 2); ?></div>
             <div class="label">PEAK DAY SALES</div>
         </div>
         
-        <div class="stat-card">
-            <i class="fas fa-fire"></i>
-            <div class="value"><?php echo count($monthly_hotspots); ?></div>
-            <div class="label">MONTHLY HOTSPOTS</div>
+        <div class="stat-card highlight">
+            <i class="fas fa-user-tie"></i>
+            <div class="value"><?php echo strtoupper($top_employee['name']); ?></div>
+            <div class="label">TOP EMPLOYEE</div>
         </div>
         
         <div class="stat-card">
-            <i class="fas fa-chart-bar"></i>
-            <div class="value"><?php echo count($weekly_comparison); ?></div>
-            <div class="label">WEEKS TRACKED</div>
+            <i class="fas fa-trophy"></i>
+            <div class="value">₱<?php echo number_format($top_employee['sales'], 2); ?></div>
+            <div class="label">TOP EMPLOYEE SALES</div>
         </div>
     </div>
     
-    <!-- CHARTS -->
+    <div class="panel">
+        <div class="panel-header">
+            <i class="fas fa-users"></i> EMPLOYEE PERFORMANCE TRACKER (Real Staff Only)
+        </div>
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>RANK</th>
+                    <th>EMPLOYEE</th>
+                    <th>ROLE</th>
+                    <th>TRANSACTIONS</th>
+                    <th>TOTAL SALES</th>
+                    <th>AVG PER SALE</th>
+                    <th>DUTY TIME</th>
+                    <th>PERFORMANCE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $rank = 1;
+                foreach($employee_data as $emp): 
+                    $badge_class = '';
+                    if ($rank == 1) $badge_class = 'gold';
+                    elseif ($rank == 2) $badge_class = 'silver';
+                    elseif ($rank == 3) $badge_class = 'bronze';
+                    
+                    // Simple Performance Logic
+                    $perf_class = 'perf-low';
+                    if ($emp['total_sales'] >= 5000) $perf_class = 'perf-excellent';
+                    elseif ($emp['total_sales'] >= 2000) $perf_class = 'perf-good';
+                    elseif ($emp['total_sales'] >= 500) $perf_class = 'perf-average';
+                    
+                    $perf_label = '';
+                    if ($perf_class == 'perf-excellent') $perf_label = 'Excellent';
+                    elseif ($perf_class == 'perf-good') $perf_label = 'Good';
+                    elseif ($perf_class == 'perf-average') $perf_label = 'Average';
+                    else $perf_label = 'Low';
+                    
+                    // Automatic Duty Time Calculation
+                    $duty_time = '0 hrs 0 min';
+                    if ($emp['first_sale'] && $emp['last_sale']) {
+                        $start = new DateTime($emp['first_sale']);
+                        $end = new DateTime($emp['last_sale']);
+                        
+                        // If only 1 transaction, show N/A or minimal time
+                        if ($emp['total_transactions'] > 1) {
+                            $diff = $start->diff($end);
+                            $duty_time = $diff->format('%h hrs %i min');
+                        } else {
+                            $duty_time = "Just started";
+                        }
+                    }
+                ?>
+                <tr>
+                    <td><span class="rank-badge <?php echo $badge_class; ?>">#<?php echo $rank; ?></span></td>
+                    <td><strong><?php echo strtoupper($emp['username']); ?></strong></td>
+                    <td><?php echo strtoupper($emp['role']); ?></td>
+                    <td><?php echo $emp['total_transactions']; ?></td>
+                    <td><strong>₱<?php echo number_format($emp['total_sales'], 2); ?></strong></td>
+                    <td>₱<?php echo number_format($emp['avg_transaction'], 2); ?></td>
+                    <td><?php echo $duty_time; ?></td>
+                    <td>
+                        <span class="performance-indicator <?php echo $perf_class; ?>"></span>
+                        <?php echo $perf_label; ?>
+                    </td>
+                </tr>
+                <?php 
+                    $rank++;
+                endforeach; 
+                if (count($employee_data) == 0) {
+                    echo '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #888;">No employee activity found for this period.</td></tr>';
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+    
     <div class="charts-grid">
         <div class="panel">
             <div class="panel-header">
@@ -412,7 +621,6 @@ while($row = mysqli_fetch_assoc($products_result)) {
         </div>
     </div>
     
-    <!-- WEEKLY COMPARISON TABLE -->
     <div class="panel">
         <div class="panel-header">
             <i class="fas fa-exchange-alt"></i> 4-WEEK COMPARISON
@@ -460,7 +668,6 @@ while($row = mysqli_fetch_assoc($products_result)) {
         </table>
     </div>
     
-    <!-- MONTHLY HOTSPOTS -->
     <div class="panel">
         <div class="panel-header">
             <i class="fas fa-fire"></i> THIS MONTH'S HOTSPOT DAYS (Top 10)
@@ -504,6 +711,33 @@ while($row = mysqli_fetch_assoc($products_result)) {
 </div>
 
 <script>
+// NIGHT MODE TOGGLE SCRIPT
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+const icon = themeToggle.querySelector('i');
+
+// Check local storage for saved preference
+if (localStorage.getItem('theme') === 'night') {
+    body.classList.add('night-mode');
+    icon.classList.remove('fa-moon');
+    icon.classList.add('fa-sun');
+}
+
+themeToggle.addEventListener('click', () => {
+    body.classList.toggle('night-mode');
+    
+    // Save preference and swap icon
+    if (body.classList.contains('night-mode')) {
+        localStorage.setItem('theme', 'night');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+    } else {
+        localStorage.setItem('theme', 'day');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+    }
+});
+
 // Daily Pattern Chart
 const dailyCtx = document.getElementById('dailyChart').getContext('2d');
 const dailyChart = new Chart(dailyCtx, {
