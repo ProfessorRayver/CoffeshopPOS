@@ -11,12 +11,15 @@ if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 
 $error = "";
 
+// --- USE YOUR ACTUAL LOCAL IP ADDRESS ---
+$serverIP = "192.168.100.10"; // YOUR COMPUTER'S IP
+$protocol = 'http'; // Use HTTP for local network
+
 // --- HANDLE LOGIN ---
 if (isset($_POST['login'])) {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $password = $_POST['password'];
     
-    // Check user credentials
     $query = "SELECT * FROM users WHERE username = ?";
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "s", $username);
@@ -26,13 +29,11 @@ if (isset($_POST['login'])) {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
         
-        // Verify password
         if ($password === $user['password']) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
             
-            // Redirect based on role
             if ($user['role'] === 'admin') {
                 header("Location: admin.php");
             } else {
@@ -53,6 +54,7 @@ if (isset($_POST['login'])) {
     <title>Login - CSR Cafe System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --espresso: #1A0F0A; 
@@ -71,7 +73,6 @@ if (isset($_POST['login'])) {
             overflow-y: auto;
         }
 
-        /* --- VIDEO BACKGROUND --- */
         #bg-video {
             position: fixed;
             right: 0;
@@ -91,7 +92,6 @@ if (isset($_POST['login'])) {
             padding: 20px;
         }
         
-        /* --- LAYOUT CONTAINER --- */
         .panels-container {
             display: flex;
             gap: 0; 
@@ -102,7 +102,6 @@ if (isset($_POST['login'])) {
             max-height: 95vh;
         }
 
-        /* --- LEFT PANEL: WELCOME CARD (70%) --- */
         .welcome-card {
             flex: 7;
             background: linear-gradient(135deg, rgba(26, 15, 10, 0.9) 0%, rgba(62, 39, 35, 0.9) 100%);
@@ -164,7 +163,43 @@ if (isset($_POST['login'])) {
             line-height: 1.6;
         }
 
-        /* --- RIGHT PANEL: LOGIN CARD (30%) --- */
+        .qr-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+        }
+
+        .qr-section h5 {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        #qrcode {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .qr-text {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--cream);
+        }
+
+        .ip-display {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-family: monospace;
+        }
+
         .login-card {
             flex: 3;
             background: rgba(255, 255, 255, 0.95);
@@ -172,7 +207,7 @@ if (isset($_POST['login'])) {
             border-left: none;
             border-radius: 0 20px 20px 0;
             box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            display: block; /* Allows scrolling flow */
+            display: block;
             overflow-y: auto; 
             padding: 0 30px; 
             backdrop-filter: blur(10px);
@@ -181,9 +216,8 @@ if (isset($_POST['login'])) {
             scrollbar-color: var(--gold) transparent;
         }
 
-        /* WRAPPER 1: LOGIN CONTENT */
         .login-content-wrapper {
-            min-height: 100%; /* Forces full height */
+            min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -311,7 +345,6 @@ if (isset($_POST['login'])) {
             60% {transform: translateY(-3px);}
         }
 
-        /* GAME SECTION - Pushed below fold */
         .game-section {
             background: rgba(26, 15, 10, 0.05);
             border-top: 2px dashed var(--gold);
@@ -356,7 +389,6 @@ if (isset($_POST['login'])) {
             cursor: pointer;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 900px) {
             .panels-container {
                 flex-direction: column;
@@ -381,7 +413,6 @@ if (isset($_POST['login'])) {
 <body>
     <video autoplay muted loop playsinline id="bg-video">
         <source src="intro.mp4" type="video/mp4">
-        Your browser does not support HTML5 video.
     </video>
 
     <audio id="bg-music" loop autoplay>
@@ -401,14 +432,26 @@ if (isset($_POST['login'])) {
                         "Coffee is a language in itself.<br>Speak it fluently."
                     </div>
                     
-                    <div style="margin-top: 50px; font-size: 1rem; opacity: 0.8;">
+                    <!-- QR CODE SECTION -->
+                    <div class="qr-section">
+                        <h5><i class="fas fa-gamepad"></i> SCAN TO PLAY GAMES</h5>
+                        <div id="qrcode"></div>
+                        <div class="qr-text">
+                            <i class="fas fa-mobile-alt"></i> Scan with your phone<br>
+                            to access digital board games
+                        </div>
+                        <div class="ip-display">
+                            <i class="fas fa-network-wired"></i> Server: <?php echo $serverIP; ?>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; font-size: 1rem; opacity: 0.8;">
                         <i class="fas fa-wifi"></i> System Online & Ready | <i class="fas fa-clock"></i> <?php echo date('h:i A'); ?>
                     </div>
                 </div>
             </div>
 
             <div class="login-card">
-                
                 <div class="login-content-wrapper">
                     <div class="login-header">
                         <img src="logo.jpg" alt="CSR Cafe Logo" class="login-logo">
@@ -462,12 +505,25 @@ if (isset($_POST['login'])) {
                         </button>
                     </div>
                 </div>
-                
             </div>
         </div>
     </div>
 
     <script>
+        // QR CODE with YOUR IP ADDRESS
+        const gamesURL = 'http://192.168.100.10/<?php echo basename(dirname(__FILE__)); ?>/games.php';
+        
+        console.log('Games URL:', gamesURL); // Check this in browser console
+        
+        new QRCode(document.getElementById("qrcode"), {
+            text: gamesURL,
+            width: 180,
+            height: 180,
+            colorDark: "#1A0F0A",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const icon = document.querySelector('.toggle-password');
@@ -491,6 +547,7 @@ if (isset($_POST['login'])) {
             });
         });
 
+        // Bean catching game
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
